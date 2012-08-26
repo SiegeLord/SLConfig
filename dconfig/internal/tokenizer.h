@@ -10,7 +10,7 @@
 
 typedef enum
 {
-	TOKEN_DCONFIG_STRING,
+	TOKEN_STRING,
 	TOKEN_DOLLAR,
 	TOKEN_SEMICOLON,
 	TOKEN_LEFT_BRACE,
@@ -37,6 +37,7 @@ typedef struct
 	DCONFIG_STRING str;
 	size_t line;
 	DCONFIG_VTABLE* vtable;
+	TOKEN cur_token;
 } TOKENIZER_STATE;
 
 TOKEN _dcfg_get_next_token(TOKENIZER_STATE* state);

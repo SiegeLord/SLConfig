@@ -149,6 +149,7 @@ exit:
 	{
 		token->str = pre_quote;
 	}
+	token->type = TOKEN_STRING;
 	return true;
 }
 
@@ -284,5 +285,6 @@ TOKEN _dcfg_get_next_token(TOKENIZER_STATE* state)
 	if(token_string(&state->str, &ret, state))
 		goto exit;
 exit:
+	state->cur_token = ret;
 	return ret;
 }
