@@ -225,11 +225,6 @@ void get_name_impl(DCONFIG_NODE* node, DCONFIG_STRING* out)
 DCONFIG_STRING dcfg_get_full_name(DCONFIG_NODE* node)
 {
 	DCONFIG_STRING ret = {0, 0};
-	if(dcfg_string_length(node->type))
-	{
-		dcfg_append_to_string(&ret, node->type, node->config->vtable.realloc);
-		dcfg_append_to_string(&ret, dcfg_from_c_str(" "), node->config->vtable.realloc);
-	}
 	get_name_impl(node, &ret);
 	return ret;
 }

@@ -22,9 +22,10 @@ bool _dcfg_parse_file(DCONFIG* config, DCONFIG_NODE* root, DCONFIG_STRING filena
 	return _dcfg_parse_aggregate(config, root, &state);
 }
 
-bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE** lhs_node, TOKENIZER_STATE* state)
+bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE** lhs_node, bool* expect_assign, TOKENIZER_STATE* state)
 {
 	size_t name_line = state->line;
+	*expect_assign = false;
 	/*
 	name;
 	name:name;
@@ -42,22 +43,62 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 			name = state->cur_token.str;
 			_dcfg_get_next_token(state);
 			DCONFIG_NODE* child = dcfg_add_node(aggregate, type_or_name, false, name, false, state->cur_token.type == TOKEN_LEFT_BRACE);
-			assert(child);
+			if(!child)
+			{
+				child = dcfg_get_node(aggregate, name);
+				_dcfg_print_error_prefix(state->filename, name_line, state->vtable);
+				state->vtable->stderr(dcfg_from_c_str("Error: Cannot change the type of '"));
+				DCONFIG_STRING full_name = dcfg_get_full_name(child);
+				state->vtable->stderr(full_name);
+				state->vtable->realloc((void*)full_name.start, 0);
+				state->vtable->stderr(dcfg_from_c_str("' from '"));
+				state->vtable->stderr(child->type);
+				state->vtable->stderr(dcfg_from_c_str("' to '"));
+				state->vtable->stderr(type_or_name);
+				state->vtable->stderr(dcfg_from_c_str("'.\n"));
+				return false;
+			}
 			*lhs_node = child;
 			return true;
 		}
-		/* name; */
-		else if(state->cur_token.type == TOKEN_SEMICOLON)
-		{
-			DCONFIG_NODE* child = dcfg_add_node(aggregate, dcfg_from_c_str(""), false, type_or_name, false, state->cur_token.type == TOKEN_LEFT_BRACE);
-			assert(child);
-			*lhs_node = child;
-			return child;
-		}
-		/* name = or name: */
-		else
+		/* name: */
+		else if(state->cur_token.type == TOKEN_COLON)
 		{
 			name = type_or_name;
+		}
+		/* name = */
+		else if(state->cur_token.type == TOKEN_ASSIGN)
+		{
+			DCONFIG_NODE* child = dcfg_get_node(aggregate, type_or_name);
+			if(child)
+			{
+				*lhs_node = child;
+			}
+			else
+			{
+				child = dcfg_add_node(aggregate, dcfg_from_c_str(""), false, type_or_name, false, state->cur_token.type == TOKEN_LEFT_BRACE);
+				assert(child);
+				*lhs_node = child;
+			}
+			*expect_assign = true;
+			return true;
+		}
+		/* name;*/
+		else
+		{
+			DCONFIG_NODE* child = dcfg_get_node(aggregate, type_or_name);
+			if(child)
+			{
+				*lhs_node = child;
+				*expect_assign = true; /* This will cause an error upon return */
+			}
+			else
+			{
+				child = dcfg_add_node(aggregate, dcfg_from_c_str(""), false, type_or_name, false, state->cur_token.type == TOKEN_LEFT_BRACE);
+				assert(child);
+				*lhs_node = child;
+			}
+			return true;
 		}
 	}
 	else if(state->cur_token.type == TOKEN_COLON)
@@ -81,10 +122,11 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 		return true;
 	}
 	
+	*expect_assign = true;
+	
 	DCONFIG_NODE* ret;
 	while(true)
 	{
-		printf("Getting... %.*s\n", (int)dcfg_string_length(name), name.start);
 		ret = dcfg_get_node(aggregate, name);
 		if(!ret)
 		{
@@ -108,6 +150,8 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 				DCONFIG_STRING full_name = dcfg_get_full_name(ret);
 				state->vtable->stderr(full_name);
 				state->vtable->realloc((void*)full_name.start, 0);
+				state->vtable->stderr(dcfg_from_c_str("' of type '"));
+				state->vtable->stderr(ret->type);
 				state->vtable->stderr(dcfg_from_c_str("' is not an aggregate.\n"));
 				return false;
 			}
@@ -132,10 +176,24 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, TOKENIZER_STATE* state)
 {
 	DCONFIG_NODE* lhs = 0;
-	if(!parse_left_hand_side(config, aggregate, &lhs, state))
+	bool expect_assign = false;
+	if(!parse_left_hand_side(config, aggregate, &lhs, &expect_assign, state))
 		return false;
 	if(lhs)
 	{
+		if(expect_assign)
+		{
+			if(state->cur_token.type == TOKEN_ASSIGN)
+			{
+				_dcfg_get_next_token(state);
+			}
+			else
+			{
+				_dcfg_expected_error(state, state->line, dcfg_from_c_str("="), state->cur_token.str);
+				return false;
+			}
+		}
+
 		if(state->cur_token.type == TOKEN_SEMICOLON)
 		{
 			_dcfg_get_next_token(state);
@@ -159,10 +217,12 @@ bool _dcfg_parse_aggregate(DCONFIG* config, DCONFIG_NODE* aggregate, TOKENIZER_S
 		_dcfg_get_next_token(state);
 	do
 	{
-		printf("Here: %zu:%.*s\n", state->line, (int)dcfg_string_length(state->cur_token.str), state->cur_token.str.start);
 		if(!parse_assign_expression(config, aggregate, state))
 			return false;
 
+		if(state->cur_token.type == TOKEN_SEMICOLON)
+			_dcfg_get_next_token(state);
+		
 		tok = state->cur_token;
 		if(tok.type != end_token && tok.type == TOKEN_RIGHT_BRACE)
 		{
