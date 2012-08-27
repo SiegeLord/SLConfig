@@ -58,18 +58,15 @@ bool advance(PARSER_STATE* state)
 static
 void set_new_node(PARSER_STATE* state, DCONFIG_NODE* node, size_t line)
 {
-	if(state->last_node)
+	if(dcfg_string_length(state->comment))
 	{
-		if(dcfg_string_length(state->comment))
-		{
-			DCONFIG_STRING* str_ptr = &state->last_node->comment;
-			state->last_node->own_comment = true;
-			if(dcfg_string_length(*str_ptr) > 0)
-				dcfg_append_to_string(str_ptr, dcfg_from_c_str("\n"), state->vtable->realloc);
-			
-			dcfg_append_to_string(str_ptr, state->comment, state->vtable->realloc);
-			state->comment.end = state->comment.start;
-		}
+		DCONFIG_STRING* str_ptr = &node->comment;
+		node->own_comment = true;
+		if(dcfg_string_length(*str_ptr) > 0)
+			dcfg_append_to_string(str_ptr, dcfg_from_c_str("\n"), state->vtable->realloc);
+		
+		dcfg_append_to_string(str_ptr, state->comment, state->vtable->realloc);
+		state->comment.end = state->comment.start;
 	}
 	
 	state->last_node = node;
@@ -247,8 +244,6 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 		{
 			if(state->cur_token.type == TOKEN_ASSIGN)
 			{
-				/* Right before we get to the semi-colon */
-				set_new_node(state, lhs, state->line);
 				if(!advance(state))
 					return false;
 			}
@@ -261,6 +256,8 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 
 		if(state->cur_token.type == TOKEN_SEMICOLON)
 		{
+			/* Right before we get to the semi-colon */
+			set_new_node(state, lhs, state->line);
 			if(!advance(state))
 				return false;
 			return true;
