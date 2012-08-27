@@ -90,6 +90,7 @@ bool parse_right_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NOD
 			state->vtable->stderr(dcfg_from_c_str("' of type '"));
 			state->vtable->stderr(lhs_node->type);
 			state->vtable->stderr(dcfg_from_c_str("' which is an aggregate.\n"));
+			return false;
 		}
 		if(!advance(state))
 			return false;
@@ -210,10 +211,13 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 	
 	*expect_assign = true;
 	
-	DCONFIG_NODE* ret;
+	DCONFIG_NODE* ret = 0;
 	while(true)
 	{
-		ret = dcfg_get_node(aggregate, name);
+		if(ret == 0)
+			ret = _dcfg_search_node(aggregate, name);
+		else
+			ret = dcfg_get_node(aggregate, name);
 		if(!ret)
 		{
 			_dcfg_print_error_prefix(state->filename, name_line, state->vtable);

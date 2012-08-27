@@ -163,10 +163,22 @@ void dcfg_destroy_node(DCONFIG_NODE* node)
 	node->config->vtable.realloc(node, 0);
 }
 
-DCONFIG_NODE* dcfg_get_node(DCONFIG_NODE* aggregate, DCONFIG_STRING name)
+DCONFIG_NODE* _dcfg_search_node(DCONFIG_NODE* aggregate, DCONFIG_STRING name)
 {
 	if(!aggregate)
 		return 0;
+	
+	DCONFIG_NODE* ret = dcfg_get_node(aggregate, name);
+	
+	if(ret)
+		return ret;
+	else
+		return _dcfg_search_node(aggregate->parent, name);
+}
+
+DCONFIG_NODE* dcfg_get_node(DCONFIG_NODE* aggregate, DCONFIG_STRING name)
+{
+	assert(aggregate);
 	
 	for(size_t ii = 0; ii < aggregate->num_children; ii++)
 	{
@@ -174,7 +186,7 @@ DCONFIG_NODE* dcfg_get_node(DCONFIG_NODE* aggregate, DCONFIG_STRING name)
 			return aggregate->children[ii];
 	}
 	
-	return dcfg_get_node(aggregate->parent, name);
+	return 0;
 }
 
 DCONFIG_NODE* dcfg_add_node(DCONFIG_NODE* aggregate, DCONFIG_STRING type, bool own_type, DCONFIG_STRING name, bool own_name, bool is_aggregate)

@@ -14,5 +14,6 @@ struct DCONFIG
 };
 
 void _dcfg_clear_node(DCONFIG_NODE* node);
+DCONFIG_NODE* _dcfg_search_node(DCONFIG_NODE* aggregate, DCONFIG_STRING name);
 
 #endif
