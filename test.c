@@ -14,7 +14,10 @@ int main()
 	{
 		printf("/*\n%.*s\n*/\n", (int)dcfg_string_length(root->children[ii]->comment), root->children[ii]->comment.start);
 		DCONFIG_STRING full_name = dcfg_get_full_name(root->children[ii]);
-		printf("(%.*s) %.*s\n", (int)dcfg_string_length(root->children[ii]->type), root->children[ii]->type.start, (int)dcfg_string_length(full_name), full_name.start);
+		printf("(%.*s) %.*s = %.*s\n",
+		   (int)dcfg_string_length(root->children[ii]->type), root->children[ii]->type.start,
+		   (int)dcfg_string_length(full_name), full_name.start,
+		   (int)dcfg_string_length(root->children[ii]->value), root->children[ii]->value.start);
 		free((void*)full_name.start);
 	}
 	dcfg_destroy_config(config);

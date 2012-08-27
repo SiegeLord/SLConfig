@@ -57,6 +57,7 @@ DCONFIG_STRING dcfg_get_full_name(DCONFIG_NODE* node);
 
 DCONFIG_NODE* dcfg_add_node(DCONFIG_NODE* aggregate, DCONFIG_STRING type, bool own_type, DCONFIG_STRING name, bool own_name, bool is_aggregate);
 DCONFIG_NODE* dcfg_get_node(DCONFIG_NODE* aggregate, DCONFIG_STRING name);
+bool dcfg_set_value(DCONFIG_NODE* node, DCONFIG_STRING value, bool own);
 
 void dcfg_destroy_config(DCONFIG* config);
 void dcfg_destroy_node(DCONFIG_NODE* node);

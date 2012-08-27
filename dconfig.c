@@ -224,7 +224,20 @@ void get_name_impl(DCONFIG_NODE* node, DCONFIG_STRING* out)
 
 DCONFIG_STRING dcfg_get_full_name(DCONFIG_NODE* node)
 {
+	assert(node);
 	DCONFIG_STRING ret = {0, 0};
 	get_name_impl(node, &ret);
 	return ret;
+}
+
+bool dcfg_set_value(DCONFIG_NODE* node, DCONFIG_STRING value, bool own)
+{
+	assert(node);
+	if(node->is_aggregate)
+		return false;
+	if(node->own_value)
+		node->config->vtable.realloc((void*)node->value.start, 0);
+	node->value = value;
+	node->own_value = own;
+	return true;
 }

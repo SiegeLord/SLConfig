@@ -74,6 +74,33 @@ void set_new_node(PARSER_STATE* state, DCONFIG_NODE* node, size_t line)
 }
 
 static
+bool parse_right_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE* lhs_node, PARSER_STATE* state)
+{
+	if(state->cur_token.type == TOKEN_STRING)
+	{
+		if(!dcfg_set_value(lhs_node, state->cur_token.str, false))
+		{
+			_dcfg_print_error_prefix(state->filename, state->line, state->vtable);
+			state->vtable->stderr(dcfg_from_c_str("Error: Trying to assign a string to '"));
+			DCONFIG_STRING full_name = dcfg_get_full_name(lhs_node);
+			state->vtable->stderr(full_name);
+			state->vtable->realloc((void*)full_name.start, 0);
+			state->vtable->stderr(dcfg_from_c_str("' of type '"));
+			state->vtable->stderr(lhs_node->type);
+			state->vtable->stderr(dcfg_from_c_str("' which is not an aggregate.\n"));
+		}
+		if(!advance(state))
+			return false;
+	}
+	else
+	{
+		_dcfg_expected_after_error(state->state, state->line, dcfg_from_c_str("a string"), dcfg_from_c_str("="), state->cur_token.str);
+		return false;
+	}
+	return true;
+}
+
+static
 bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE** lhs_node, bool* expect_assign, PARSER_STATE* state)
 {
 	size_t name_line = state->line;
@@ -113,6 +140,7 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 				return false;
 			}
 			*lhs_node = child;
+			*expect_assign = state->cur_token.type != TOKEN_SEMICOLON;
 			return true;
 		}
 		/* name: */
@@ -245,6 +273,8 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 			if(state->cur_token.type == TOKEN_ASSIGN)
 			{
 				if(!advance(state))
+					return false;
+				if(!parse_right_hand_side(config, aggregate, lhs, state))
 					return false;
 			}
 			else
