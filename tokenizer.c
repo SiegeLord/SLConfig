@@ -30,24 +30,26 @@ DCONFIG_STRING ltrim(DCONFIG_STRING str)
 }
 
 static
-DCONFIG_STRING eat_newline(DCONFIG_STRING str, size_t* line)
+bool eat_newline(DCONFIG_STRING *str, size_t* line)
 {
-	DCONFIG_STRING ret = str;
-	while(ret.start < ret.end)
+	bool ret = false;
+	while(str->start < str->end)
 	{
-		if(*ret.start == LF)
+		if(*str->start == LF)
 		{
-			ret.start++;
+			ret = true;
+			str->start++;
 			(*line)++;
-			if(ret.start < ret.end && *ret.start == CR)
-				ret.start++;
+			if(str->start < str->end && *str->start == CR)
+				str->start++;
 		}
-		else if(*ret.start == CR)
+		else if(*str->start == CR)
 		{
-			ret.start++;
+			ret = true;
+			str->start++;
 			(*line)++;
-			if(ret.start < ret.end && *ret.start == LF)
-				ret.start++;
+			if(str->start < str->end && *str->start == LF)
+				str->start++;
 		}
 		else
 		{
@@ -131,8 +133,8 @@ bool token_string(DCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 			goto exit;
 		}
 		
-		*str = eat_newline(*str, &state->line);
-		str->start++;
+		if(!eat_newline(str, &state->line))
+			str->start++;
 	}
 	
 	_dcfg_print_error_prefix(state->filename, start_line, state->vtable);
@@ -225,8 +227,8 @@ bool token_block_comment(DCONFIG_STRING* str, TOKEN* token, TOKENIZER_STATE* sta
 					goto exit;
 				}
 
-				*str = eat_newline(*str, &state->line);
-				str->start++;
+				if(!eat_newline(str, &state->line))
+					str->start++;
 			}
 
 			_dcfg_print_error_prefix(state->filename, start_line, state->vtable);
@@ -252,7 +254,8 @@ TOKEN _dcfg_get_next_token(TOKENIZER_STATE* state)
 	do
 	{
 		old_start = state->str.start;
-		state->str = eat_newline(ltrim(state->str), &state->line);
+		state->str = ltrim(state->str);
+		eat_newline(&state->str, &state->line);
 	} while(old_start != state->str.start);
 	
 	TOKEN ret;
