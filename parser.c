@@ -21,6 +21,8 @@ typedef struct
 	DCONFIG_VTABLE* vtable;
 } PARSER_STATE;
 
+static bool parse_aggregate(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* state);
+
 static
 bool advance(PARSER_STATE* state)
 {
@@ -87,7 +89,7 @@ bool parse_right_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NOD
 			state->vtable->realloc((void*)full_name.start, 0);
 			state->vtable->stderr(dcfg_from_c_str("' of type '"));
 			state->vtable->stderr(lhs_node->type);
-			state->vtable->stderr(dcfg_from_c_str("' which is not an aggregate.\n"));
+			state->vtable->stderr(dcfg_from_c_str("' which is an aggregate.\n"));
 		}
 		if(!advance(state))
 			return false;
@@ -149,7 +151,7 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 			name = type_or_name;
 		}
 		/* name = */
-		else if(state->cur_token.type == TOKEN_ASSIGN)
+		else if(state->cur_token.type == TOKEN_ASSIGN || state->cur_token.type == TOKEN_LEFT_BRACE)
 		{
 			DCONFIG_NODE* child = dcfg_get_node(aggregate, type_or_name);
 			if(child)
@@ -248,6 +250,8 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 				return false;
 			}
 			name = state->cur_token.str;
+			if(!advance(state))
+				return false;
 		}
 		else
 		{
@@ -268,6 +272,7 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 		return false;
 	if(lhs)
 	{
+		bool was_aggregate = false;
 		if(expect_assign)
 		{
 			if(state->cur_token.type == TOKEN_ASSIGN)
@@ -277,25 +282,63 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 				if(!parse_right_hand_side(config, aggregate, lhs, state))
 					return false;
 			}
+			else if(state->cur_token.type == TOKEN_LEFT_BRACE)
+			{
+				if(!lhs->is_aggregate)
+				{
+					_dcfg_print_error_prefix(state->filename, state->line, state->vtable);
+					state->vtable->stderr(dcfg_from_c_str("Error: Trying to an aggregate to '"));
+					DCONFIG_STRING full_name = dcfg_get_full_name(lhs);
+					state->vtable->stderr(full_name);
+					state->vtable->realloc((void*)full_name.start, 0);
+					state->vtable->stderr(dcfg_from_c_str("' of type '"));
+					state->vtable->stderr(lhs->type);
+					state->vtable->stderr(dcfg_from_c_str("' which is not an aggregate.\n"));
+					return false;
+				}
+				
+				set_new_node(state, lhs, state->line);
+				was_aggregate = true;
+				
+				DCONFIG_NODE temp_node;
+				memset(&temp_node, 0, sizeof(DCONFIG_NODE));
+				temp_node.parent = aggregate;
+				temp_node.is_aggregate = true;
+				temp_node.config = config;
+				temp_node.type = lhs->type;
+				temp_node.own_type = lhs->own_type;
+				temp_node.name = lhs->name;
+				temp_node.own_name = lhs->own_name;
+				temp_node.comment = lhs->comment;
+				temp_node.own_comment = lhs->own_comment;
+				
+				if(!parse_aggregate(config, &temp_node, state))
+					return false;
+				_dcfg_clear_node(lhs);
+				memcpy(lhs, &temp_node, sizeof(DCONFIG_NODE));
+			}
 			else
 			{
-				_dcfg_expected_error(state->state, state->line, dcfg_from_c_str("="), state->cur_token.str);
+				_dcfg_expected_error(state->state, state->line, dcfg_from_c_str(lhs->is_aggregate ? "{" : "="), state->cur_token.str);
 				return false;
 			}
 		}
 
-		if(state->cur_token.type == TOKEN_SEMICOLON)
+		if(!was_aggregate)
 		{
-			/* Right before we get to the semi-colon */
-			set_new_node(state, lhs, state->line);
-			if(!advance(state))
+			if(state->cur_token.type == TOKEN_SEMICOLON)
+			{
+				/* Right before we get to the semi-colon */
+				set_new_node(state, lhs, state->line);
+				if(!advance(state))
+					return false;
+				return true;
+			}
+			else
+			{
+				_dcfg_expected_error(state->state, state->line, dcfg_from_c_str(";"), state->cur_token.str);
 				return false;
-			return true;
-		}
-		else
-		{
-			_dcfg_expected_error(state->state, state->line, dcfg_from_c_str(";"), state->cur_token.str);
-			return false;
+			}
 		}
 	}
 	return true;
@@ -340,6 +383,12 @@ bool parse_aggregate(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* sta
 			}
 		}
 	} while(tok.type != end_token);
+	
+	if(end_token == TOKEN_RIGHT_BRACE)
+	{
+		if(!advance(state))
+			return false;
+	}
 	
 	return true;
 }

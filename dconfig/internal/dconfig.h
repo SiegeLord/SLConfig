@@ -13,4 +13,6 @@ struct DCONFIG
 	DCONFIG_VTABLE vtable;
 };
 
+void _dcfg_clear_node(DCONFIG_NODE* node);
+
 #endif
