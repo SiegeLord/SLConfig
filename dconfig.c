@@ -36,9 +36,15 @@ size_t default_fread(void* buf, size_t size, size_t nmemb, void* f)
 	return fread(buf, size, nmemb, f);
 }
 
+static
+void* default_realloc(void* buf, size_t size)
+{
+	return realloc(buf, size);
+}
+
 DCONFIG_VTABLE default_vtable =
 {
-	&realloc,
+	&default_realloc,
 	&default_stderr,
 	&default_fopen,
 	&default_fclose,
@@ -121,12 +127,12 @@ void dcfg_destroy_config(DCONFIG* config)
 	if(!config)
 		return;
 	
+	dcfg_destroy_node(config->root);
+	
 	for(size_t ii = 0; ii < config->num_files; ii++)
 		config->vtable.realloc((void*)config->files[ii].start, 0);
 	
 	config->vtable.realloc(config->files, 0);
-	
-	dcfg_destroy_node(config->root);
 	
 	config->vtable.realloc(config, 0);
 }
@@ -217,7 +223,7 @@ DCONFIG_NODE* dcfg_add_node(DCONFIG_NODE* aggregate, DCONFIG_STRING type, bool o
 	child->own_type = own_type;
 	child->config = aggregate->config;
 	
-	aggregate->children = aggregate->config->vtable.realloc(aggregate->children, aggregate->num_children + 1);
+	aggregate->children = aggregate->config->vtable.realloc(aggregate->children, (aggregate->num_children + 1) * sizeof(DCONFIG_NODE*));
 	aggregate->children[aggregate->num_children] = child;
 	aggregate->num_children++;
 	

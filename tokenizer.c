@@ -265,6 +265,7 @@ TOKEN _dcfg_get_next_token(TOKENIZER_STATE* state)
 	if(state->str.start == state->str.end)
 	{
 		ret.type = TOKEN_EOF;
+		ret.str = dcfg_from_c_str("<EOF>");
 		goto exit;
 	}
 	if(token_character(&state->str, &ret, '$', TOKEN_DOLLAR))
