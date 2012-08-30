@@ -29,21 +29,25 @@ bool advance(PARSER_STATE* state)
 	TOKEN token = _dcfg_get_next_token(state->state);
 	while(token.type == TOKEN_COMMENT)
 	{
-		DCONFIG_STRING* str_ptr;
-		if(state->last_node && state->state->line == state->last_node_line)
+		if(token.str.start[0] == '*')
 		{
-			str_ptr = &state->last_node->comment;
-			state->last_node->own_comment = true;
+			DCONFIG_STRING* str_ptr;
+			if(state->last_node && state->state->line == state->last_node_line)
+			{
+				str_ptr = &state->last_node->comment;
+				state->last_node->own_comment = true;
+			}
+			else
+			{
+				state->last_node = 0;
+				str_ptr = &state->comment;
+			}
+			
+			if(dcfg_string_length(*str_ptr) > 0)
+				dcfg_append_to_string(str_ptr, dcfg_from_c_str("\n"), state->vtable->realloc);
+			token.str.start++;
+			dcfg_append_to_string(str_ptr, token.str, state->vtable->realloc);
 		}
-		else
-		{
-			state->last_node = 0;
-			str_ptr = &state->comment;
-		}
-		
-		if(dcfg_string_length(*str_ptr) > 0)
-			dcfg_append_to_string(str_ptr, dcfg_from_c_str("\n"), state->vtable->realloc);
-		dcfg_append_to_string(str_ptr, token.str, state->vtable->realloc);
 		
 		token = _dcfg_get_next_token(state->state);
 	}
