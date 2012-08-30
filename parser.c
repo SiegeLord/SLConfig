@@ -82,20 +82,31 @@ void set_new_node(PARSER_STATE* state, DCONFIG_NODE* node, size_t line)
 static
 bool parse_right_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE* lhs_node, PARSER_STATE* state)
 {
-	if(state->cur_token.type == TOKEN_STRING)
+	if(lhs_node->is_aggregate)
 	{
-		if(!dcfg_set_value(lhs_node, state->cur_token.str, false))
+		_dcfg_print_error_prefix(state->filename, state->line, state->vtable);
+		state->vtable->stderr(dcfg_from_c_str("Error: Trying to assign a string to '"));
+		DCONFIG_STRING full_name = dcfg_get_full_name(lhs_node);
+		state->vtable->stderr(full_name);
+		state->vtable->realloc((void*)full_name.start, 0);
+		state->vtable->stderr(dcfg_from_c_str("' of type '"));
+		state->vtable->stderr(lhs_node->type);
+		state->vtable->stderr(dcfg_from_c_str("' which is an aggregate.\n"));
+		return false;
+	}
+		
+	if(state->cur_token.type == TOKEN_STRING)
+	{	
+		if(!lhs_node->own_value)
 		{
-			_dcfg_print_error_prefix(state->filename, state->line, state->vtable);
-			state->vtable->stderr(dcfg_from_c_str("Error: Trying to assign a string to '"));
-			DCONFIG_STRING full_name = dcfg_get_full_name(lhs_node);
-			state->vtable->stderr(full_name);
-			state->vtable->realloc((void*)full_name.start, 0);
-			state->vtable->stderr(dcfg_from_c_str("' of type '"));
-			state->vtable->stderr(lhs_node->type);
-			state->vtable->stderr(dcfg_from_c_str("' which is an aggregate.\n"));
-			return false;
+			DCONFIG_STRING old = lhs_node->value;
+			lhs_node->value.start = 0;
+			lhs_node->value.end = 0;
+			dcfg_append_to_string(&lhs_node->value, old, config->vtable.realloc);
 		}
+		
+		dcfg_append_to_string(&lhs_node->value, state->cur_token.str, config->vtable.realloc);
+
 		if(!advance(state))
 			return false;
 	}
@@ -287,8 +298,11 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 			{
 				if(!advance(state))
 					return false;
-				if(!parse_right_hand_side(config, aggregate, lhs, state))
-					return false;
+				do
+				{
+					if(!parse_right_hand_side(config, aggregate, lhs, state))
+						return false;
+				} while(state->cur_token.type != TOKEN_SEMICOLON);
 			}
 			else if(state->cur_token.type == TOKEN_LEFT_BRACE)
 			{
