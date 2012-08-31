@@ -457,6 +457,29 @@ error:
 }
 
 static
+bool parse_remove(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* state)
+{
+	if(state->cur_token.type == TOKEN_TILDE)
+	{
+		if(!advance(state))
+			return false;
+		
+		DCONFIG_NODE* ref_node;
+		if(!parse_node_ref(config, aggregate, &ref_node, state))
+			return false;
+		
+		dcfg_destroy_node(ref_node);
+		
+		if(state->cur_token.type != TOKEN_SEMICOLON)
+		{
+			_dcfg_expected_error(state->state, state->line, dcfg_from_c_str(";"), state->cur_token.str);
+			return false;
+		}
+	}
+	return true;
+}
+
+static
 bool parse_aggregate(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* state)
 {
 	TOKEN tok = state->cur_token;
@@ -471,14 +494,24 @@ bool parse_aggregate(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* sta
 	{
 		if(!parse_assign_expression(config, aggregate, state))
 			return false;
+		if(!parse_remove(config, aggregate, state))
+			return false;
 
-		if(state->cur_token.type == TOKEN_SEMICOLON)
+		tok = state->cur_token;
+		if(tok.type == TOKEN_SEMICOLON)
 		{
 			if(!advance(state))
 				return false;
 		}
+		else if(tok.type != end_token)
+		{
+			_dcfg_print_error_prefix(state->filename, state->line, state->vtable);
+			state->vtable->stderr(dcfg_from_c_str("Error: Unexpected '"));
+			state->vtable->stderr(tok.str);
+			state->vtable->stderr(dcfg_from_c_str("'.\n"));
+			return false;
+		}
 		
-		tok = state->cur_token;
 		if(tok.type != end_token && tok.type == TOKEN_RIGHT_BRACE)
 		{
 			if(tok.type == TOKEN_RIGHT_BRACE)

@@ -138,6 +138,31 @@ void dcfg_destroy_config(DCONFIG* config)
 	config->vtable.realloc(config, 0);
 }
 
+static
+void detach_node(DCONFIG_NODE* node)
+{
+	if(node->parent)
+	{
+		DCONFIG_NODE* parent = node->parent;
+		node->parent = 0;
+		size_t ii;
+		
+		for(ii = 0; ii < parent->num_children; ii++)
+		{
+			if(parent->children[ii] == node)
+				break;
+		}
+		assert(ii < parent->num_children);
+		
+		for(size_t jj = ii + 1; jj < parent->num_children; jj++)
+		{
+			parent->children[jj - 1] = parent->children[jj];
+		}
+		
+		parent->num_children--;
+	}
+}
+
 void dcfg_destroy_node(DCONFIG_NODE* node)
 {
 	if(!node)
@@ -161,7 +186,7 @@ void dcfg_destroy_node(DCONFIG_NODE* node)
 	
 	node->config->vtable.realloc(node->children, 0);
 	
-	/* TODO: detach */
+	detach_node(node);
 	
 	node->config->vtable.realloc(node, 0);
 }
