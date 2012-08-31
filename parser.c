@@ -249,7 +249,7 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 			name = state->cur_token.str;
 			if(!advance(state))
 				return false;
-			DCONFIG_NODE* child = dcfg_add_node(aggregate, type_or_name, false, name, false, state->cur_token.type == TOKEN_LEFT_BRACE);
+			DCONFIG_NODE* child = _dcfg_add_node_no_attach(aggregate, type_or_name, false, name, false, state->cur_token.type == TOKEN_LEFT_BRACE);
 			if(!child)
 			{
 				child = dcfg_get_node(aggregate, name);
@@ -285,7 +285,7 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 			}
 			else
 			{
-				child = dcfg_add_node(aggregate, dcfg_from_c_str(""), false, type_or_name, false, state->cur_token.type == TOKEN_LEFT_BRACE);
+				child = _dcfg_add_node_no_attach(aggregate, dcfg_from_c_str(""), false, type_or_name, false, state->cur_token.type == TOKEN_LEFT_BRACE);
 				assert(child);
 				*lhs_node = child;
 			}
@@ -303,7 +303,7 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 			}
 			else
 			{
-				child = dcfg_add_node(aggregate, dcfg_from_c_str(""), false, type_or_name, false, state->cur_token.type == TOKEN_LEFT_BRACE);
+				child = _dcfg_add_node_no_attach(aggregate, dcfg_from_c_str(""), false, type_or_name, false, state->cur_token.type == TOKEN_LEFT_BRACE);
 				assert(child);
 				*lhs_node = child;
 			}
@@ -342,12 +342,14 @@ static
 bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* state)
 {
 	DCONFIG_NODE* lhs = 0;
+	bool is_new = false;
 	bool expect_assign = false;
 	if(!parse_left_hand_side(config, aggregate, &lhs, &expect_assign, state))
-		return false;
+		goto error;
 	if(lhs)
 	{
 		bool was_aggregate = false;
+		is_new = lhs->parent == 0;
 		if(expect_assign)
 		{
 			if(state->cur_token.type == TOKEN_ASSIGN)
@@ -362,17 +364,17 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 					state->vtable->stderr(dcfg_from_c_str("' of type '"));
 					state->vtable->stderr(lhs->type);
 					state->vtable->stderr(dcfg_from_c_str("' which is an aggregate.\n"));
-					return false;
+					goto error;
 				}
 				
 				if(!advance(state))
-					return false;
+					goto error;
 				
 				DCONFIG_STRING rhs = {0, 0};
 				do
 				{
 					if(!parse_right_hand_side(config, aggregate, &rhs, state))
-						return false;
+						goto error;
 				} while(state->cur_token.type != TOKEN_SEMICOLON);
 				
 				if(lhs->own_value)
@@ -392,7 +394,7 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 					state->vtable->stderr(dcfg_from_c_str("' of type '"));
 					state->vtable->stderr(lhs->type);
 					state->vtable->stderr(dcfg_from_c_str("' which is not an aggregate.\n"));
-					return false;
+					goto error;
 				}
 				
 				set_new_node(state, lhs, state->line);
@@ -411,14 +413,21 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 				temp_node.own_comment = lhs->own_comment;
 				
 				if(!parse_aggregate(config, &temp_node, state))
-					return false;
-				_dcfg_clear_node(lhs);
+					goto error;
+				
+				for(size_t ii = 0; ii < lhs->num_children; ii++)
+					dcfg_destroy_node(lhs->children[ii]);
+				
 				memcpy(lhs, &temp_node, sizeof(DCONFIG_NODE));
+				if(is_new)
+					lhs->parent = 0; /* So the attach code below works */
+				for(size_t ii = 0; ii < lhs->num_children; ii++)
+					lhs->children[ii]->parent = lhs;
 			}
 			else
 			{
 				_dcfg_expected_error(state->state, state->line, dcfg_from_c_str(lhs->is_aggregate ? "{" : "="), state->cur_token.str);
-				return false;
+				goto error;
 			}
 		}
 
@@ -429,17 +438,22 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 				/* Right before we get to the semi-colon */
 				set_new_node(state, lhs, state->line);
 				if(!advance(state))
-					return false;
-				return true;
+					goto error;
 			}
 			else
 			{
 				_dcfg_expected_error(state->state, state->line, dcfg_from_c_str(";"), state->cur_token.str);
-				return false;
+				goto error;
 			}
 		}
 	}
+	if(is_new)
+		_dcfg_attach_node(aggregate, lhs);
 	return true;
+error:
+	if(is_new)
+		dcfg_destroy_node(lhs);
+	return false;
 }
 
 static

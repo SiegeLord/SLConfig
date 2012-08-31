@@ -39,6 +39,7 @@ size_t default_fread(void* buf, size_t size, size_t nmemb, void* f)
 static
 void* default_realloc(void* buf, size_t size)
 {
+	//printf("%p\n", buf);
 	return realloc(buf, size);
 }
 
@@ -139,6 +140,7 @@ void dcfg_destroy_config(DCONFIG* config)
 
 void _dcfg_clear_node(DCONFIG_NODE* node)
 {
+	//printf("Clearing %.*s\n", (int)dcfg_string_length(node->name), node->name.start);
 	if(node->own_type)
 		node->config->vtable.realloc((void*)node->type.start, 0);
 
@@ -195,39 +197,58 @@ DCONFIG_NODE* dcfg_get_node(DCONFIG_NODE* aggregate, DCONFIG_STRING name)
 	return 0;
 }
 
-DCONFIG_NODE* dcfg_add_node(DCONFIG_NODE* aggregate, DCONFIG_STRING type, bool own_type, DCONFIG_STRING name, bool own_name, bool is_aggregate)
+DCONFIG_NODE* _dcfg_add_node_no_attach(DCONFIG_NODE* aggregate, DCONFIG_STRING type, bool own_type, DCONFIG_STRING name, bool own_name, bool is_aggregate)
 {
 	if(!aggregate)
 		return 0;
 	if(!aggregate->is_aggregate)
 		return 0;
-	for(size_t ii = 0; ii < aggregate->num_children; ii++)
+	
+	DCONFIG_NODE* child = dcfg_get_node(aggregate, name);
+	if(child)
 	{
-		DCONFIG_NODE* child = aggregate->children[ii];
-		if(dcfg_string_equal(name, child->name))
-		{
-			if(dcfg_string_equal(child->type, type))
-				return child;
-			else
-				return 0;
-		}
+		if(dcfg_string_equal(child->type, type))
+			return child;
+		else
+			return 0;
 	}
 	
-	DCONFIG_NODE* child = aggregate->config->vtable.realloc(0, sizeof(DCONFIG_NODE));
+	child = aggregate->config->vtable.realloc(0, sizeof(DCONFIG_NODE));
 	memset(child, 0, sizeof(DCONFIG_NODE));
 	child->is_aggregate = is_aggregate;
-	child->parent = aggregate;
 	child->name = name;
 	child->own_name = own_name;
 	child->type = type;
 	child->own_type = own_type;
 	child->config = aggregate->config;
 	
-	aggregate->children = aggregate->config->vtable.realloc(aggregate->children, (aggregate->num_children + 1) * sizeof(DCONFIG_NODE*));
-	aggregate->children[aggregate->num_children] = child;
-	aggregate->num_children++;
+	//printf("%.*s : %p\n", (int)dcfg_string_length(name), name.start, child);
 	
 	return child;
+}
+
+void _dcfg_attach_node(DCONFIG_NODE* aggregate, DCONFIG_NODE* node)
+{
+	if(!aggregate)
+		return;
+	if(!aggregate->is_aggregate)
+		return;
+	if(node->parent == aggregate)
+		return;
+	assert(node->parent == 0);
+	//printf("Attaching %.*s to %.*s : %p\n", (int)dcfg_string_length(node->name), node->name.start, (int)dcfg_string_length(aggregate->name), aggregate->name.start, aggregate);
+	node->parent = aggregate;
+	aggregate->children = aggregate->config->vtable.realloc(aggregate->children, (aggregate->num_children + 1) * sizeof(DCONFIG_NODE*));
+	aggregate->children[aggregate->num_children] = node;
+	aggregate->num_children++;
+}
+
+DCONFIG_NODE* dcfg_add_node(DCONFIG_NODE* aggregate, DCONFIG_STRING type, bool own_type, DCONFIG_STRING name, bool own_name, bool is_aggregate)
+{
+	DCONFIG_NODE* node = _dcfg_add_node_no_attach(aggregate, type, own_type, name, own_name, is_aggregate);
+	if(node)
+		_dcfg_attach_node(aggregate, node);
+	return node;
 }
 
 DCONFIG_NODE* dcfg_get_root(DCONFIG* config)

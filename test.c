@@ -12,6 +12,10 @@ void print_delegate(DCONFIG_NODE* node, int level)
 	for(size_t ii = 0; ii < node->num_children; ii++)
 	{
 		DCONFIG_NODE* child = node->children[ii];
+		if(child->parent)
+		{
+			//printf("Parent: %.*s : %p\n", (int)dcfg_string_length(child->parent->name), child->parent->name.start, child->parent);
+		}
 		printf("%s/*\n%s%.*s\n%s*/\n", indent, indent, (int)dcfg_string_length(child->comment), child->comment.start, indent);
 		DCONFIG_STRING full_name = dcfg_get_full_name(child);
 		printf("%s(%.*s) %.*s", indent, (int)dcfg_string_length(child->type), child->type.start,
