@@ -557,7 +557,7 @@ bool parse_expand_aggregate(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STA
 			_dcfg_free(config, new_node->children);
 			
 			if(new_node->own_value)
-				_dcfg_free(config, (void*)new_node->name.start);
+				_dcfg_free(config, (void*)new_node->value.start);
 			
 			_dcfg_copy_into(new_node, child);
 		}
