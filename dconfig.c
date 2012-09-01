@@ -131,11 +131,11 @@ void dcfg_destroy_config(DCONFIG* config)
 	dcfg_destroy_node(config->root);
 	
 	for(size_t ii = 0; ii < config->num_files; ii++)
-		config->vtable.realloc((void*)config->files[ii].start, 0);
+		_dcfg_free(config, (void*)config->files[ii].start);
 	
-	config->vtable.realloc(config->files, 0);
+	_dcfg_free(config, config->files);
 	
-	config->vtable.realloc(config, 0);
+	_dcfg_free(config, config);
 }
 
 static
@@ -163,32 +163,39 @@ void detach_node(DCONFIG_NODE* node)
 	}
 }
 
-void dcfg_destroy_node(DCONFIG_NODE* node)
+void _dcfg_destroy_node(DCONFIG_NODE* node, bool detach)
 {
 	if(!node)
 		return;
 	
-	//printf("Clearing %.*s\n", (int)dcfg_string_length(node->name), node->name.start);
+	//printf("Clearing %.*s %zu\n", (int)dcfg_string_length(node->name), node->name.start, node->num_children);
 	if(node->own_type)
-		node->config->vtable.realloc((void*)node->type.start, 0);
+		_dcfg_free(node->config, (void*)node->type.start);
 
 	if(node->own_name)
-		node->config->vtable.realloc((void*)node->name.start, 0);
+		_dcfg_free(node->config, (void*)node->name.start);
 
 	if(node->own_value)
-		node->config->vtable.realloc((void*)node->value.start, 0);
+		_dcfg_free(node->config, (void*)node->value.start);
 	
 	if(node->own_comment)
-		node->config->vtable.realloc((void*)node->comment.start, 0);
+		_dcfg_free(node->config, (void*)node->comment.start);
 	
 	for(size_t ii = 0; ii < node->num_children; ii++)
-		dcfg_destroy_node(node->children[ii]);
+		_dcfg_destroy_node(node->children[ii], false);
 	
-	node->config->vtable.realloc(node->children, 0);
+	if(node->children)
+		_dcfg_free(node->config, node->children);
 	
-	detach_node(node);
+	if(detach)
+		detach_node(node);
 	
-	node->config->vtable.realloc(node, 0);
+	_dcfg_free(node->config, node);
+}
+
+void dcfg_destroy_node(DCONFIG_NODE* node)
+{
+	_dcfg_destroy_node(node, true);
 }
 
 DCONFIG_NODE* _dcfg_search_node(DCONFIG_NODE* aggregate, DCONFIG_STRING name)
@@ -227,7 +234,7 @@ DCONFIG_NODE* _dcfg_add_node_no_attach(DCONFIG_NODE* aggregate, DCONFIG_STRING t
 	DCONFIG_NODE* child = dcfg_get_node(aggregate, name);
 	if(child)
 	{
-		if(dcfg_string_equal(child->type, type))
+		if(dcfg_string_equal(child->type, type) && child->is_aggregate == is_aggregate)
 			return child;
 		else
 			return 0;
@@ -302,8 +309,37 @@ bool dcfg_set_value(DCONFIG_NODE* node, DCONFIG_STRING value, bool own)
 	if(node->is_aggregate)
 		return false;
 	if(node->own_value)
-		node->config->vtable.realloc((void*)node->value.start, 0);
+		_dcfg_free(node->config, (void*)node->value.start);
 	node->value = value;
 	node->own_value = own;
 	return true;
+}
+
+void _dcfg_copy_into(DCONFIG_NODE* dest, DCONFIG_NODE* src)
+{
+	dest->type = src->type;
+	dest->own_type = src->own_type;
+	dest->name = src->name;
+	dest->own_name = src->own_name;
+	
+	dest->value.start = 0;
+	dest->value.end = 0;
+	dcfg_append_to_string(&dest->value, src->value, src->config->vtable.realloc);
+	dest->own_value = true;
+	
+	dest->is_aggregate = src->is_aggregate;
+	dest->num_children = 0;
+	dest->children = 0;
+	
+	/* Don't touch the parent */
+	
+	if(src->is_aggregate)
+	{
+		for(size_t ii = 0; ii < src->num_children; ii++)
+		{
+			DCONFIG_NODE* child = src->children[ii];
+			DCONFIG_NODE* new_node = dcfg_add_node(dest, child->type, false, child->name, false, child->is_aggregate);
+			_dcfg_copy_into(new_node, child);
+		}
+	}
 }

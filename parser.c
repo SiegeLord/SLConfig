@@ -96,7 +96,7 @@ bool parse_node_ref_name(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_STRIN
 			state->vtable->stderr(dcfg_from_c_str("Error: '"));
 			DCONFIG_STRING full_name = dcfg_get_full_name(aggregate);
 			state->vtable->stderr(full_name);
-			state->vtable->realloc((void*)full_name.start, 0);
+			_dcfg_free(config, (void*)full_name.start);
 			state->vtable->stderr(dcfg_from_c_str(":"));
 			state->vtable->stderr(name);
 			state->vtable->stderr(dcfg_from_c_str("' does not exist.\n"));
@@ -111,7 +111,7 @@ bool parse_node_ref_name(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_STRIN
 				state->vtable->stderr(dcfg_from_c_str("Error: '"));
 				DCONFIG_STRING full_name = dcfg_get_full_name(ret);
 				state->vtable->stderr(full_name);
-				state->vtable->realloc((void*)full_name.start, 0);
+				_dcfg_free(config, (void*)full_name.start);
 				state->vtable->stderr(dcfg_from_c_str("' of type '"));
 				state->vtable->stderr(ret->type);
 				state->vtable->stderr(dcfg_from_c_str("' is not an aggregate.\n"));
@@ -207,7 +207,7 @@ bool parse_right_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_STR
 			state->vtable->stderr(dcfg_from_c_str("Error: Trying to extract a string from '"));
 			DCONFIG_STRING full_name = dcfg_get_full_name(ref_node);
 			state->vtable->stderr(full_name);
-			state->vtable->realloc((void*)full_name.start, 0);
+			_dcfg_free(config, (void*)full_name.start);
 			state->vtable->stderr(dcfg_from_c_str("' of type '"));
 			state->vtable->stderr(ref_node->type);
 			state->vtable->stderr(dcfg_from_c_str("' which is an aggregate.\n"));
@@ -249,7 +249,8 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 			name = state->cur_token.str;
 			if(!advance(state))
 				return false;
-			DCONFIG_NODE* child = _dcfg_add_node_no_attach(aggregate, type_or_name, false, name, false, state->cur_token.type == TOKEN_LEFT_BRACE);
+			bool is_aggregate = state->cur_token.type == TOKEN_LEFT_BRACE;
+			DCONFIG_NODE* child = _dcfg_add_node_no_attach(aggregate, type_or_name, false, name, false, is_aggregate);
 			if(!child)
 			{
 				child = dcfg_get_node(aggregate, name);
@@ -257,12 +258,17 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 				state->vtable->stderr(dcfg_from_c_str("Error: Cannot change the type of '"));
 				DCONFIG_STRING full_name = dcfg_get_full_name(child);
 				state->vtable->stderr(full_name);
-				state->vtable->realloc((void*)full_name.start, 0);
+				_dcfg_free(config, (void*)full_name.start);
 				state->vtable->stderr(dcfg_from_c_str("' from '"));
 				state->vtable->stderr(child->type);
-				state->vtable->stderr(dcfg_from_c_str("' to '"));
+				state->vtable->stderr(dcfg_from_c_str("' ("));
+				state->vtable->stderr(dcfg_from_c_str(child->is_aggregate ? "aggregate" : "string"));
+				state->vtable->stderr(dcfg_from_c_str(") to "));
+				state->vtable->stderr(dcfg_from_c_str("'"));
 				state->vtable->stderr(type_or_name);
-				state->vtable->stderr(dcfg_from_c_str("'.\n"));
+				state->vtable->stderr(dcfg_from_c_str("' ("));
+				state->vtable->stderr(dcfg_from_c_str(is_aggregate ? "aggregate" : "string"));
+				state->vtable->stderr(dcfg_from_c_str(").\n"));
 				return false;
 			}
 			*lhs_node = child;
@@ -360,7 +366,7 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 					state->vtable->stderr(dcfg_from_c_str("Error: Trying to assign a string to '"));
 					DCONFIG_STRING full_name = dcfg_get_full_name(lhs);
 					state->vtable->stderr(full_name);
-					state->vtable->realloc((void*)full_name.start, 0);
+					_dcfg_free(config, (void*)full_name.start);
 					state->vtable->stderr(dcfg_from_c_str("' of type '"));
 					state->vtable->stderr(lhs->type);
 					state->vtable->stderr(dcfg_from_c_str("' which is an aggregate.\n"));
@@ -378,7 +384,7 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 				} while(state->cur_token.type != TOKEN_SEMICOLON);
 				
 				if(lhs->own_value)
-					config->vtable.realloc((void*)lhs->value.start, 0);
+					_dcfg_free(config, (void*)lhs->value.start);
 				lhs->value = rhs;
 				lhs->own_value = true;
 			}
@@ -387,10 +393,10 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 				if(!lhs->is_aggregate)
 				{
 					_dcfg_print_error_prefix(state->filename, state->line, state->vtable);
-					state->vtable->stderr(dcfg_from_c_str("Error: Trying to an aggregate to '"));
+					state->vtable->stderr(dcfg_from_c_str("Error: Trying to assign an aggregate to '"));
 					DCONFIG_STRING full_name = dcfg_get_full_name(lhs);
 					state->vtable->stderr(full_name);
-					state->vtable->realloc((void*)full_name.start, 0);
+					_dcfg_free(config, (void*)full_name.start);
 					state->vtable->stderr(dcfg_from_c_str("' of type '"));
 					state->vtable->stderr(lhs->type);
 					state->vtable->stderr(dcfg_from_c_str("' which is not an aggregate.\n"));
@@ -416,7 +422,7 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 					goto error;
 				
 				for(size_t ii = 0; ii < lhs->num_children; ii++)
-					dcfg_destroy_node(lhs->children[ii]);
+					_dcfg_destroy_node(lhs->children[ii], false);
 				
 				memcpy(lhs, &temp_node, sizeof(DCONFIG_NODE));
 				if(is_new)
@@ -437,8 +443,6 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 			{
 				/* Right before we get to the semi-colon */
 				set_new_node(state, lhs, state->line);
-				if(!advance(state))
-					goto error;
 			}
 			else
 			{
@@ -480,6 +484,94 @@ bool parse_remove(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* state)
 }
 
 static
+bool parse_expand_aggregate(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* state)
+{
+	if(state->cur_token.type == TOKEN_DOLLAR)
+	{
+		if(!advance(state))
+			return false;
+		
+		DCONFIG_NODE* ref_node;
+		if(!parse_node_ref(config, aggregate, &ref_node, state))
+			return false;
+		
+		if(!ref_node->is_aggregate)
+		{
+			_dcfg_print_error_prefix(state->filename, state->line, state->vtable);
+			state->vtable->stderr(dcfg_from_c_str("Error: Trying to expand '"));
+			DCONFIG_STRING full_name = dcfg_get_full_name(ref_node);
+			state->vtable->stderr(full_name);
+			_dcfg_free(config, (void*)full_name.start);
+			state->vtable->stderr(dcfg_from_c_str("' of type '"));
+			state->vtable->stderr(ref_node->type);
+			state->vtable->stderr(dcfg_from_c_str("' which is not an aggregate.\n"));
+			return false;
+		}
+		
+		for(size_t ii = 0; ii < ref_node->num_children; ii++)
+		{
+			DCONFIG_NODE* child = ref_node->children[ii];
+			DCONFIG_NODE* new_node = dcfg_add_node(aggregate, child->type, false, child->name, false, child->is_aggregate);
+			if(!new_node)
+			{
+				DCONFIG_NODE* old_node = dcfg_get_node(aggregate, child->name);
+				DCONFIG_STRING full_name;
+				
+				_dcfg_print_error_prefix(state->filename, state->line, state->vtable);
+				state->vtable->stderr(dcfg_from_c_str("Error: Cannot expand '"));
+				
+				full_name = dcfg_get_full_name(ref_node);
+				state->vtable->stderr(full_name);
+				_dcfg_free(config, (void*)full_name.start);
+				
+				state->vtable->stderr(dcfg_from_c_str("' of type '"));
+				state->vtable->stderr(ref_node->type);
+				state->vtable->stderr(dcfg_from_c_str("'. Its child '"));
+				
+				full_name = dcfg_get_full_name(child);
+				state->vtable->stderr(full_name);
+				_dcfg_free(config, (void*)full_name.start);
+				
+				state->vtable->stderr(dcfg_from_c_str("' of type '"));
+				state->vtable->stderr(child->type);
+				state->vtable->stderr(dcfg_from_c_str("' ("));
+				state->vtable->stderr(dcfg_from_c_str(child->is_aggregate ? "aggregate" : "string"));
+				state->vtable->stderr(dcfg_from_c_str(") conflicts with '"));
+				
+				full_name = dcfg_get_full_name(old_node);
+				state->vtable->stderr(full_name);
+				_dcfg_free(config, (void*)full_name.start);
+				
+				state->vtable->stderr(dcfg_from_c_str("' of type '"));
+				state->vtable->stderr(old_node->type);
+				state->vtable->stderr(dcfg_from_c_str("' ("));
+				state->vtable->stderr(dcfg_from_c_str(old_node->is_aggregate ? "aggregate" : "string"));
+				state->vtable->stderr(dcfg_from_c_str(").\n"));
+				
+				return false;
+			}
+			
+			for(size_t ii = 0; ii < new_node->num_children; ii++)
+				_dcfg_destroy_node(new_node->children[ii], false);
+			
+			_dcfg_free(config, new_node->children);
+			
+			if(new_node->own_value)
+				_dcfg_free(config, (void*)new_node->name.start);
+			
+			_dcfg_copy_into(new_node, child);
+		}
+		
+		if(state->cur_token.type != TOKEN_SEMICOLON)
+		{
+			_dcfg_expected_error(state->state, state->line, dcfg_from_c_str(";"), state->cur_token.str);
+			return false;
+		}
+	}
+	return true;
+}
+
+static
 bool parse_aggregate(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* state)
 {
 	TOKEN tok = state->cur_token;
@@ -496,6 +588,8 @@ bool parse_aggregate(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* sta
 			return false;
 		if(!parse_remove(config, aggregate, state))
 			return false;
+		if(!parse_expand_aggregate(config, aggregate, state))
+			return false;
 
 		tok = state->cur_token;
 		if(tok.type == TOKEN_SEMICOLON)
@@ -503,15 +597,8 @@ bool parse_aggregate(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* sta
 			if(!advance(state))
 				return false;
 		}
-		else if(tok.type != end_token)
-		{
-			_dcfg_print_error_prefix(state->filename, state->line, state->vtable);
-			state->vtable->stderr(dcfg_from_c_str("Error: Unexpected '"));
-			state->vtable->stderr(tok.str);
-			state->vtable->stderr(dcfg_from_c_str("'.\n"));
-			return false;
-		}
 		
+		tok = state->cur_token;
 		if(tok.type != end_token && tok.type == TOKEN_RIGHT_BRACE)
 		{
 			if(tok.type == TOKEN_RIGHT_BRACE)

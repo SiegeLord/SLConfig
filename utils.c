@@ -1,4 +1,5 @@
 #include "dconfig/internal/utils.h"
+#include "dconfig/internal/dconfig.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -79,5 +80,14 @@ char* dcfg_to_c_str(DCONFIG_STRING str)
 	size_t len = dcfg_string_length(str);
 	char* ret = malloc(len + 1);
 	memcpy(ret, str.start, len);
+	ret[len] = '\0';
 	return ret;
+}
+
+void _dcfg_free(DCONFIG* config, void* ptr)
+{
+	if(ptr)
+	{
+		config->vtable.realloc(ptr, 0);
+	}
 }
