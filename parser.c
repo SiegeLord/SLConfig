@@ -1,7 +1,7 @@
-#include "dconfig/internal/parser.h"
-#include "dconfig/internal/tokenizer.h"
-#include "dconfig/internal/utils.h"
-#include "dconfig/dconfig.h"
+#include "slconfig/internal/parser.h"
+#include "slconfig/internal/tokenizer.h"
+#include "slconfig/internal/utils.h"
+#include "slconfig/slconfig.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -9,29 +9,29 @@
 
 typedef struct
 {
-	DCONFIG_STRING comment;
-	DCONFIG_NODE* last_node;
+	SLCONFIG_STRING comment;
+	SLCONFIG_NODE* last_node;
 	size_t last_node_line;
 	
 	TOKENIZER_STATE* state;
 	
-	DCONFIG_STRING filename;
+	SLCONFIG_STRING filename;
 	size_t line;
 	TOKEN cur_token;
-	DCONFIG_VTABLE* vtable;
+	SLCONFIG_VTABLE* vtable;
 } PARSER_STATE;
 
-static bool parse_aggregate(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* state);
+static bool parse_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state);
 
 static
 bool advance(PARSER_STATE* state)
 {
-	TOKEN token = _dcfg_get_next_token(state->state);
+	TOKEN token = _slc_get_next_token(state->state);
 	while(token.type == TOKEN_COMMENT)
 	{
 		if(token.str.start[0] == '*')
 		{
-			DCONFIG_STRING* str_ptr;
+			SLCONFIG_STRING* str_ptr;
 			if(state->last_node && state->state->line == state->last_node_line)
 			{
 				str_ptr = &state->last_node->comment;
@@ -43,13 +43,13 @@ bool advance(PARSER_STATE* state)
 				str_ptr = &state->comment;
 			}
 			
-			if(dcfg_string_length(*str_ptr) > 0)
-				dcfg_append_to_string(str_ptr, dcfg_from_c_str("\n"), state->vtable->realloc);
+			if(slc_string_length(*str_ptr) > 0)
+				slc_append_to_string(str_ptr, slc_from_c_str("\n"), state->vtable->realloc);
 			token.str.start++;
-			dcfg_append_to_string(str_ptr, token.str, state->vtable->realloc);
+			slc_append_to_string(str_ptr, token.str, state->vtable->realloc);
 		}
 		
-		token = _dcfg_get_next_token(state->state);
+		token = _slc_get_next_token(state->state);
 	}
 
 	state->cur_token = token;
@@ -62,16 +62,16 @@ bool advance(PARSER_STATE* state)
 }
 
 static
-void set_new_node(PARSER_STATE* state, DCONFIG_NODE* node, size_t line)
+void set_new_node(PARSER_STATE* state, SLCONFIG_NODE* node, size_t line)
 {
-	if(dcfg_string_length(state->comment))
+	if(slc_string_length(state->comment))
 	{
-		DCONFIG_STRING* str_ptr = &node->comment;
+		SLCONFIG_STRING* str_ptr = &node->comment;
 		node->own_comment = true;
-		if(dcfg_string_length(*str_ptr) > 0)
-			dcfg_append_to_string(str_ptr, dcfg_from_c_str("\n"), state->vtable->realloc);
+		if(slc_string_length(*str_ptr) > 0)
+			slc_append_to_string(str_ptr, slc_from_c_str("\n"), state->vtable->realloc);
 		
-		dcfg_append_to_string(str_ptr, state->comment, state->vtable->realloc);
+		slc_append_to_string(str_ptr, state->comment, state->vtable->realloc);
 		state->comment.end = state->comment.start;
 	}
 	
@@ -80,26 +80,26 @@ void set_new_node(PARSER_STATE* state, DCONFIG_NODE* node, size_t line)
 }
 
 static
-bool parse_node_ref_name(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_STRING name, size_t name_line, DCONFIG_NODE** ref_node, PARSER_STATE* state)
+bool parse_node_ref_name(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_STRING name, size_t name_line, SLCONFIG_NODE** ref_node, PARSER_STATE* state)
 {
 	(void)config;
-	DCONFIG_NODE* ret = 0;
+	SLCONFIG_NODE* ret = 0;
 	while(true)
 	{
 		if(ret == 0)
-			ret = _dcfg_search_node(aggregate, name);
+			ret = _slc_search_node(aggregate, name);
 		else
-			ret = dcfg_get_node(aggregate, name);
+			ret = slc_get_node(aggregate, name);
 		if(!ret)
 		{
-			_dcfg_print_error_prefix(state->filename, name_line, state->vtable);
-			state->vtable->stderr(dcfg_from_c_str("Error: '"));
-			DCONFIG_STRING full_name = dcfg_get_full_name(aggregate);
+			_slc_print_error_prefix(state->filename, name_line, state->vtable);
+			state->vtable->stderr(slc_from_c_str("Error: '"));
+			SLCONFIG_STRING full_name = slc_get_full_name(aggregate);
 			state->vtable->stderr(full_name);
-			_dcfg_free(config, (void*)full_name.start);
-			state->vtable->stderr(dcfg_from_c_str(":"));
+			_slc_free(config, (void*)full_name.start);
+			state->vtable->stderr(slc_from_c_str(":"));
 			state->vtable->stderr(name);
-			state->vtable->stderr(dcfg_from_c_str("' does not exist.\n"));
+			state->vtable->stderr(slc_from_c_str("' does not exist.\n"));
 			return false;
 		}
 		
@@ -107,14 +107,14 @@ bool parse_node_ref_name(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_STRIN
 		{
 			if(!ret->is_aggregate)
 			{
-				_dcfg_print_error_prefix(state->filename, name_line, state->vtable);
-				state->vtable->stderr(dcfg_from_c_str("Error: '"));
-				DCONFIG_STRING full_name = dcfg_get_full_name(ret);
+				_slc_print_error_prefix(state->filename, name_line, state->vtable);
+				state->vtable->stderr(slc_from_c_str("Error: '"));
+				SLCONFIG_STRING full_name = slc_get_full_name(ret);
 				state->vtable->stderr(full_name);
-				_dcfg_free(config, (void*)full_name.start);
-				state->vtable->stderr(dcfg_from_c_str("' of type '"));
+				_slc_free(config, (void*)full_name.start);
+				state->vtable->stderr(slc_from_c_str("' of type '"));
 				state->vtable->stderr(ret->type);
-				state->vtable->stderr(dcfg_from_c_str("' is not an aggregate.\n"));
+				state->vtable->stderr(slc_from_c_str("' is not an aggregate.\n"));
 				return false;
 			}
 			aggregate = ret;
@@ -122,7 +122,7 @@ bool parse_node_ref_name(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_STRIN
 				return false;
 			if(state->cur_token.type != TOKEN_STRING)
 			{
-				_dcfg_expected_after_error(state->state, state->line, dcfg_from_c_str("a string"), dcfg_from_c_str(":"), state->cur_token.str);
+				_slc_expected_after_error(state->state, state->line, slc_from_c_str("a string"), slc_from_c_str(":"), state->cur_token.str);
 				return false;
 			}
 			name = state->cur_token.str;
@@ -139,9 +139,9 @@ bool parse_node_ref_name(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_STRIN
 }
 
 static
-bool parse_node_ref(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE** ref_node, PARSER_STATE* state)
+bool parse_node_ref(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_NODE** ref_node, PARSER_STATE* state)
 {
-	DCONFIG_STRING name;
+	SLCONFIG_STRING name;
 	size_t name_line;
 	if(state->cur_token.type == TOKEN_COLON)
 	{
@@ -155,7 +155,7 @@ bool parse_node_ref(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE** ref
 		}
 		else
 		{
-			_dcfg_expected_after_error(state->state, state->line, dcfg_from_c_str("a string"), dcfg_from_c_str(":"), state->cur_token.str);
+			_slc_expected_after_error(state->state, state->line, slc_from_c_str("a string"), slc_from_c_str(":"), state->cur_token.str);
 			return false;
 		}
 	}
@@ -176,9 +176,9 @@ bool parse_node_ref(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE** ref
 }
 
 static
-bool parse_right_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_STRING* rhs, PARSER_STATE* state)
+bool parse_right_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_STRING* rhs, PARSER_STATE* state)
 {	
-	DCONFIG_STRING str;
+	SLCONFIG_STRING str;
 		
 	if(state->cur_token.type == TOKEN_STRING)
 	{	
@@ -193,41 +193,41 @@ bool parse_right_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_STR
 		
 		if(state->cur_token.type != TOKEN_STRING && state->cur_token.type != TOKEN_COLON)
 		{
-			_dcfg_expected_after_error(state->state, state->line, dcfg_from_c_str("a string or ':'"), dcfg_from_c_str("$"), state->cur_token.str);
+			_slc_expected_after_error(state->state, state->line, slc_from_c_str("a string or ':'"), slc_from_c_str("$"), state->cur_token.str);
 			return false;
 		}
 		
-		DCONFIG_NODE* ref_node;
+		SLCONFIG_NODE* ref_node;
 		if(!parse_node_ref(config, aggregate, &ref_node, state))
 			return false;
 		
 		if(ref_node->is_aggregate)
 		{
-			_dcfg_print_error_prefix(state->filename, state->line, state->vtable);
-			state->vtable->stderr(dcfg_from_c_str("Error: Trying to extract a string from '"));
-			DCONFIG_STRING full_name = dcfg_get_full_name(ref_node);
+			_slc_print_error_prefix(state->filename, state->line, state->vtable);
+			state->vtable->stderr(slc_from_c_str("Error: Trying to extract a string from '"));
+			SLCONFIG_STRING full_name = slc_get_full_name(ref_node);
 			state->vtable->stderr(full_name);
-			_dcfg_free(config, (void*)full_name.start);
-			state->vtable->stderr(dcfg_from_c_str("' of type '"));
+			_slc_free(config, (void*)full_name.start);
+			state->vtable->stderr(slc_from_c_str("' of type '"));
 			state->vtable->stderr(ref_node->type);
-			state->vtable->stderr(dcfg_from_c_str("' which is an aggregate.\n"));
+			state->vtable->stderr(slc_from_c_str("' which is an aggregate.\n"));
 		}
 		
 		str = ref_node->value;
 	}
 	else
 	{
-		_dcfg_expected_after_error(state->state, state->line, dcfg_from_c_str("a string"), dcfg_from_c_str("="), state->cur_token.str);
+		_slc_expected_after_error(state->state, state->line, slc_from_c_str("a string"), slc_from_c_str("="), state->cur_token.str);
 		return false;
 	}
 
-	dcfg_append_to_string(rhs, str, config->vtable.realloc);
+	slc_append_to_string(rhs, str, config->vtable.realloc);
 	
 	return true;
 }
 
 static
-bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE** lhs_node, bool* expect_assign, PARSER_STATE* state)
+bool parse_left_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_NODE** lhs_node, bool* expect_assign, PARSER_STATE* state)
 {
 	size_t name_line = state->line;
 	*expect_assign = false;
@@ -236,10 +236,10 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 	name:name;
 	type name;
 	*/
-	DCONFIG_STRING name;
+	SLCONFIG_STRING name;
 	if(state->cur_token.type == TOKEN_STRING)
 	{
-		DCONFIG_STRING type_or_name = state->cur_token.str;
+		SLCONFIG_STRING type_or_name = state->cur_token.str;
 		name_line = state->line;
 		if(!advance(state))
 			return false;
@@ -250,25 +250,25 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 			if(!advance(state))
 				return false;
 			bool is_aggregate = state->cur_token.type == TOKEN_LEFT_BRACE;
-			DCONFIG_NODE* child = _dcfg_add_node_no_attach(aggregate, type_or_name, false, name, false, is_aggregate);
+			SLCONFIG_NODE* child = _slc_add_node_no_attach(aggregate, type_or_name, false, name, false, is_aggregate);
 			if(!child)
 			{
-				child = dcfg_get_node(aggregate, name);
-				_dcfg_print_error_prefix(state->filename, name_line, state->vtable);
-				state->vtable->stderr(dcfg_from_c_str("Error: Cannot change the type of '"));
-				DCONFIG_STRING full_name = dcfg_get_full_name(child);
+				child = slc_get_node(aggregate, name);
+				_slc_print_error_prefix(state->filename, name_line, state->vtable);
+				state->vtable->stderr(slc_from_c_str("Error: Cannot change the type of '"));
+				SLCONFIG_STRING full_name = slc_get_full_name(child);
 				state->vtable->stderr(full_name);
-				_dcfg_free(config, (void*)full_name.start);
-				state->vtable->stderr(dcfg_from_c_str("' from '"));
+				_slc_free(config, (void*)full_name.start);
+				state->vtable->stderr(slc_from_c_str("' from '"));
 				state->vtable->stderr(child->type);
-				state->vtable->stderr(dcfg_from_c_str("' ("));
-				state->vtable->stderr(dcfg_from_c_str(child->is_aggregate ? "aggregate" : "string"));
-				state->vtable->stderr(dcfg_from_c_str(") to "));
-				state->vtable->stderr(dcfg_from_c_str("'"));
+				state->vtable->stderr(slc_from_c_str("' ("));
+				state->vtable->stderr(slc_from_c_str(child->is_aggregate ? "aggregate" : "string"));
+				state->vtable->stderr(slc_from_c_str(") to "));
+				state->vtable->stderr(slc_from_c_str("'"));
 				state->vtable->stderr(type_or_name);
-				state->vtable->stderr(dcfg_from_c_str("' ("));
-				state->vtable->stderr(dcfg_from_c_str(is_aggregate ? "aggregate" : "string"));
-				state->vtable->stderr(dcfg_from_c_str(").\n"));
+				state->vtable->stderr(slc_from_c_str("' ("));
+				state->vtable->stderr(slc_from_c_str(is_aggregate ? "aggregate" : "string"));
+				state->vtable->stderr(slc_from_c_str(").\n"));
 				return false;
 			}
 			*lhs_node = child;
@@ -284,14 +284,14 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 		/* name = */
 		else if(state->cur_token.type == TOKEN_ASSIGN || state->cur_token.type == TOKEN_LEFT_BRACE)
 		{
-			DCONFIG_NODE* child = dcfg_get_node(aggregate, type_or_name);
+			SLCONFIG_NODE* child = slc_get_node(aggregate, type_or_name);
 			if(child)
 			{
 				*lhs_node = child;
 			}
 			else
 			{
-				child = _dcfg_add_node_no_attach(aggregate, dcfg_from_c_str(""), false, type_or_name, false, state->cur_token.type == TOKEN_LEFT_BRACE);
+				child = _slc_add_node_no_attach(aggregate, slc_from_c_str(""), false, type_or_name, false, state->cur_token.type == TOKEN_LEFT_BRACE);
 				assert(child);
 				*lhs_node = child;
 			}
@@ -301,7 +301,7 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 		/* name;*/
 		else
 		{
-			DCONFIG_NODE* child = dcfg_get_node(aggregate, type_or_name);
+			SLCONFIG_NODE* child = slc_get_node(aggregate, type_or_name);
 			if(child)
 			{
 				*lhs_node = child;
@@ -309,7 +309,7 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 			}
 			else
 			{
-				child = _dcfg_add_node_no_attach(aggregate, dcfg_from_c_str(""), false, type_or_name, false, state->cur_token.type == TOKEN_LEFT_BRACE);
+				child = _slc_add_node_no_attach(aggregate, slc_from_c_str(""), false, type_or_name, false, state->cur_token.type == TOKEN_LEFT_BRACE);
 				assert(child);
 				*lhs_node = child;
 			}
@@ -330,7 +330,7 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 		}
 		else
 		{
-			_dcfg_expected_after_error(state->state, state->line, dcfg_from_c_str("a string"), dcfg_from_c_str(":"), state->cur_token.str);
+			_slc_expected_after_error(state->state, state->line, slc_from_c_str("a string"), slc_from_c_str(":"), state->cur_token.str);
 			return false;
 		}
 	}
@@ -345,9 +345,9 @@ bool parse_left_hand_side(DCONFIG* config, DCONFIG_NODE* aggregate, DCONFIG_NODE
 }
 
 static
-bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* state)
+bool parse_assign_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
 {
-	DCONFIG_NODE* lhs = 0;
+	SLCONFIG_NODE* lhs = 0;
 	bool is_new = false;
 	bool expect_assign = false;
 	if(!parse_left_hand_side(config, aggregate, &lhs, &expect_assign, state))
@@ -362,21 +362,21 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 			{
 				if(lhs->is_aggregate)
 				{
-					_dcfg_print_error_prefix(state->filename, state->line, state->vtable);
-					state->vtable->stderr(dcfg_from_c_str("Error: Trying to assign a string to '"));
-					DCONFIG_STRING full_name = dcfg_get_full_name(lhs);
+					_slc_print_error_prefix(state->filename, state->line, state->vtable);
+					state->vtable->stderr(slc_from_c_str("Error: Trying to assign a string to '"));
+					SLCONFIG_STRING full_name = slc_get_full_name(lhs);
 					state->vtable->stderr(full_name);
-					_dcfg_free(config, (void*)full_name.start);
-					state->vtable->stderr(dcfg_from_c_str("' of type '"));
+					_slc_free(config, (void*)full_name.start);
+					state->vtable->stderr(slc_from_c_str("' of type '"));
 					state->vtable->stderr(lhs->type);
-					state->vtable->stderr(dcfg_from_c_str("' which is an aggregate.\n"));
+					state->vtable->stderr(slc_from_c_str("' which is an aggregate.\n"));
 					goto error;
 				}
 				
 				if(!advance(state))
 					goto error;
 				
-				DCONFIG_STRING rhs = {0, 0};
+				SLCONFIG_STRING rhs = {0, 0};
 				do
 				{
 					if(!parse_right_hand_side(config, aggregate, &rhs, state))
@@ -384,7 +384,7 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 				} while(state->cur_token.type != TOKEN_SEMICOLON);
 				
 				if(lhs->own_value)
-					_dcfg_free(config, (void*)lhs->value.start);
+					_slc_free(config, (void*)lhs->value.start);
 				lhs->value = rhs;
 				lhs->own_value = true;
 			}
@@ -392,22 +392,22 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 			{
 				if(!lhs->is_aggregate)
 				{
-					_dcfg_print_error_prefix(state->filename, state->line, state->vtable);
-					state->vtable->stderr(dcfg_from_c_str("Error: Trying to assign an aggregate to '"));
-					DCONFIG_STRING full_name = dcfg_get_full_name(lhs);
+					_slc_print_error_prefix(state->filename, state->line, state->vtable);
+					state->vtable->stderr(slc_from_c_str("Error: Trying to assign an aggregate to '"));
+					SLCONFIG_STRING full_name = slc_get_full_name(lhs);
 					state->vtable->stderr(full_name);
-					_dcfg_free(config, (void*)full_name.start);
-					state->vtable->stderr(dcfg_from_c_str("' of type '"));
+					_slc_free(config, (void*)full_name.start);
+					state->vtable->stderr(slc_from_c_str("' of type '"));
 					state->vtable->stderr(lhs->type);
-					state->vtable->stderr(dcfg_from_c_str("' which is not an aggregate.\n"));
+					state->vtable->stderr(slc_from_c_str("' which is not an aggregate.\n"));
 					goto error;
 				}
 				
 				set_new_node(state, lhs, state->line);
 				was_aggregate = true;
 				
-				DCONFIG_NODE temp_node;
-				memset(&temp_node, 0, sizeof(DCONFIG_NODE));
+				SLCONFIG_NODE temp_node;
+				memset(&temp_node, 0, sizeof(SLCONFIG_NODE));
 				temp_node.parent = aggregate;
 				temp_node.is_aggregate = true;
 				temp_node.config = config;
@@ -422,9 +422,9 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 					goto error;
 				
 				for(size_t ii = 0; ii < lhs->num_children; ii++)
-					_dcfg_destroy_node(lhs->children[ii], false);
+					_slc_destroy_node(lhs->children[ii], false);
 				
-				memcpy(lhs, &temp_node, sizeof(DCONFIG_NODE));
+				memcpy(lhs, &temp_node, sizeof(SLCONFIG_NODE));
 				if(is_new)
 					lhs->parent = 0; /* So the attach code below works */
 				for(size_t ii = 0; ii < lhs->num_children; ii++)
@@ -432,7 +432,7 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 			}
 			else
 			{
-				_dcfg_expected_error(state->state, state->line, dcfg_from_c_str(lhs->is_aggregate ? "{" : "="), state->cur_token.str);
+				_slc_expected_error(state->state, state->line, slc_from_c_str(lhs->is_aggregate ? "{" : "="), state->cur_token.str);
 				goto error;
 			}
 		}
@@ -446,37 +446,37 @@ bool parse_assign_expression(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_ST
 			}
 			else
 			{
-				_dcfg_expected_error(state->state, state->line, dcfg_from_c_str(";"), state->cur_token.str);
+				_slc_expected_error(state->state, state->line, slc_from_c_str(";"), state->cur_token.str);
 				goto error;
 			}
 		}
 	}
 	if(is_new)
-		_dcfg_attach_node(aggregate, lhs);
+		_slc_attach_node(aggregate, lhs);
 	return true;
 error:
 	if(is_new)
-		dcfg_destroy_node(lhs);
+		slc_destroy_node(lhs);
 	return false;
 }
 
 static
-bool parse_remove(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* state)
+bool parse_remove(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
 {
 	if(state->cur_token.type == TOKEN_TILDE)
 	{
 		if(!advance(state))
 			return false;
 		
-		DCONFIG_NODE* ref_node;
+		SLCONFIG_NODE* ref_node;
 		if(!parse_node_ref(config, aggregate, &ref_node, state))
 			return false;
 		
-		dcfg_destroy_node(ref_node);
+		slc_destroy_node(ref_node);
 		
 		if(state->cur_token.type != TOKEN_SEMICOLON)
 		{
-			_dcfg_expected_error(state->state, state->line, dcfg_from_c_str(";"), state->cur_token.str);
+			_slc_expected_error(state->state, state->line, slc_from_c_str(";"), state->cur_token.str);
 			return false;
 		}
 	}
@@ -484,87 +484,87 @@ bool parse_remove(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* state)
 }
 
 static
-bool parse_expand_aggregate(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* state)
+bool parse_expand_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
 {
 	if(state->cur_token.type == TOKEN_DOLLAR)
 	{
 		if(!advance(state))
 			return false;
 		
-		DCONFIG_NODE* ref_node;
+		SLCONFIG_NODE* ref_node;
 		if(!parse_node_ref(config, aggregate, &ref_node, state))
 			return false;
 		
 		if(!ref_node->is_aggregate)
 		{
-			_dcfg_print_error_prefix(state->filename, state->line, state->vtable);
-			state->vtable->stderr(dcfg_from_c_str("Error: Trying to expand '"));
-			DCONFIG_STRING full_name = dcfg_get_full_name(ref_node);
+			_slc_print_error_prefix(state->filename, state->line, state->vtable);
+			state->vtable->stderr(slc_from_c_str("Error: Trying to expand '"));
+			SLCONFIG_STRING full_name = slc_get_full_name(ref_node);
 			state->vtable->stderr(full_name);
-			_dcfg_free(config, (void*)full_name.start);
-			state->vtable->stderr(dcfg_from_c_str("' of type '"));
+			_slc_free(config, (void*)full_name.start);
+			state->vtable->stderr(slc_from_c_str("' of type '"));
 			state->vtable->stderr(ref_node->type);
-			state->vtable->stderr(dcfg_from_c_str("' which is not an aggregate.\n"));
+			state->vtable->stderr(slc_from_c_str("' which is not an aggregate.\n"));
 			return false;
 		}
 		
 		for(size_t ii = 0; ii < ref_node->num_children; ii++)
 		{
-			DCONFIG_NODE* child = ref_node->children[ii];
-			DCONFIG_NODE* new_node = dcfg_add_node(aggregate, child->type, false, child->name, false, child->is_aggregate);
+			SLCONFIG_NODE* child = ref_node->children[ii];
+			SLCONFIG_NODE* new_node = slc_add_node(aggregate, child->type, false, child->name, false, child->is_aggregate);
 			if(!new_node)
 			{
-				DCONFIG_NODE* old_node = dcfg_get_node(aggregate, child->name);
-				DCONFIG_STRING full_name;
+				SLCONFIG_NODE* old_node = slc_get_node(aggregate, child->name);
+				SLCONFIG_STRING full_name;
 				
-				_dcfg_print_error_prefix(state->filename, state->line, state->vtable);
-				state->vtable->stderr(dcfg_from_c_str("Error: Cannot expand '"));
+				_slc_print_error_prefix(state->filename, state->line, state->vtable);
+				state->vtable->stderr(slc_from_c_str("Error: Cannot expand '"));
 				
-				full_name = dcfg_get_full_name(ref_node);
+				full_name = slc_get_full_name(ref_node);
 				state->vtable->stderr(full_name);
-				_dcfg_free(config, (void*)full_name.start);
+				_slc_free(config, (void*)full_name.start);
 				
-				state->vtable->stderr(dcfg_from_c_str("' of type '"));
+				state->vtable->stderr(slc_from_c_str("' of type '"));
 				state->vtable->stderr(ref_node->type);
-				state->vtable->stderr(dcfg_from_c_str("'. Its child '"));
+				state->vtable->stderr(slc_from_c_str("'. Its child '"));
 				
-				full_name = dcfg_get_full_name(child);
+				full_name = slc_get_full_name(child);
 				state->vtable->stderr(full_name);
-				_dcfg_free(config, (void*)full_name.start);
+				_slc_free(config, (void*)full_name.start);
 				
-				state->vtable->stderr(dcfg_from_c_str("' of type '"));
+				state->vtable->stderr(slc_from_c_str("' of type '"));
 				state->vtable->stderr(child->type);
-				state->vtable->stderr(dcfg_from_c_str("' ("));
-				state->vtable->stderr(dcfg_from_c_str(child->is_aggregate ? "aggregate" : "string"));
-				state->vtable->stderr(dcfg_from_c_str(") conflicts with '"));
+				state->vtable->stderr(slc_from_c_str("' ("));
+				state->vtable->stderr(slc_from_c_str(child->is_aggregate ? "aggregate" : "string"));
+				state->vtable->stderr(slc_from_c_str(") conflicts with '"));
 				
-				full_name = dcfg_get_full_name(old_node);
+				full_name = slc_get_full_name(old_node);
 				state->vtable->stderr(full_name);
-				_dcfg_free(config, (void*)full_name.start);
+				_slc_free(config, (void*)full_name.start);
 				
-				state->vtable->stderr(dcfg_from_c_str("' of type '"));
+				state->vtable->stderr(slc_from_c_str("' of type '"));
 				state->vtable->stderr(old_node->type);
-				state->vtable->stderr(dcfg_from_c_str("' ("));
-				state->vtable->stderr(dcfg_from_c_str(old_node->is_aggregate ? "aggregate" : "string"));
-				state->vtable->stderr(dcfg_from_c_str(").\n"));
+				state->vtable->stderr(slc_from_c_str("' ("));
+				state->vtable->stderr(slc_from_c_str(old_node->is_aggregate ? "aggregate" : "string"));
+				state->vtable->stderr(slc_from_c_str(").\n"));
 				
 				return false;
 			}
 			
 			for(size_t ii = 0; ii < new_node->num_children; ii++)
-				_dcfg_destroy_node(new_node->children[ii], false);
+				_slc_destroy_node(new_node->children[ii], false);
 			
-			_dcfg_free(config, new_node->children);
+			_slc_free(config, new_node->children);
 			
 			if(new_node->own_value)
-				_dcfg_free(config, (void*)new_node->value.start);
+				_slc_free(config, (void*)new_node->value.start);
 			
-			_dcfg_copy_into(new_node, child);
+			_slc_copy_into(new_node, child);
 		}
 		
 		if(state->cur_token.type != TOKEN_SEMICOLON)
 		{
-			_dcfg_expected_error(state->state, state->line, dcfg_from_c_str(";"), state->cur_token.str);
+			_slc_expected_error(state->state, state->line, slc_from_c_str(";"), state->cur_token.str);
 			return false;
 		}
 	}
@@ -572,7 +572,7 @@ bool parse_expand_aggregate(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STA
 }
 
 static
-bool parse_aggregate(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* state)
+bool parse_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
 {
 	TOKEN tok = state->cur_token;
 	size_t start_line = state->line;
@@ -603,14 +603,14 @@ bool parse_aggregate(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* sta
 		{
 			if(tok.type == TOKEN_RIGHT_BRACE)
 			{
-				_dcfg_print_error_prefix(state->filename, state->line, state->vtable);
-				state->vtable->stderr(dcfg_from_c_str("Error: Unpaired '}'.\n"));
+				_slc_print_error_prefix(state->filename, state->line, state->vtable);
+				state->vtable->stderr(slc_from_c_str("Error: Unpaired '}'.\n"));
 				return false;
 			}
 			else if(tok.type == TOKEN_EOF)
 			{
-				_dcfg_print_error_prefix(state->filename, start_line, state->vtable);
-				state->vtable->stderr(dcfg_from_c_str("Error: Unpaired '{'.\n"));
+				_slc_print_error_prefix(state->filename, start_line, state->vtable);
+				state->vtable->stderr(slc_from_c_str("Error: Unpaired '{'.\n"));
 				return false;
 			}
 		}
@@ -626,7 +626,7 @@ bool parse_aggregate(DCONFIG* config, DCONFIG_NODE* aggregate, PARSER_STATE* sta
 }
 
 /* Note that the file is assumed to be owned by the config */
-bool _dcfg_parse_file(DCONFIG* config, DCONFIG_NODE* root, DCONFIG_STRING filename, DCONFIG_STRING file)
+bool _slc_parse_file(SLCONFIG* config, SLCONFIG_NODE* root, SLCONFIG_STRING filename, SLCONFIG_STRING file)
 {
 	TOKENIZER_STATE state;
 	state.filename = filename;
@@ -634,7 +634,7 @@ bool _dcfg_parse_file(DCONFIG* config, DCONFIG_NODE* root, DCONFIG_STRING filena
 	state.line = 1;
 	state.vtable = &config->vtable;
 	
-	config->files = config->vtable.realloc(config->files, (config->num_files + 1) * sizeof(DCONFIG_STRING));
+	config->files = config->vtable.realloc(config->files, (config->num_files + 1) * sizeof(SLCONFIG_STRING));
 	config->files[config->num_files++] = file;
 	
 	PARSER_STATE parser_state;

@@ -1,5 +1,5 @@
-#include "dconfig/internal/tokenizer.h"
-#include "dconfig/internal/utils.h"
+#include "slconfig/internal/tokenizer.h"
+#include "slconfig/internal/utils.h"
 
 static
 bool is_whitespace(char c)
@@ -22,7 +22,7 @@ bool is_naked_string_character(char c)
 }
 
 static
-DCONFIG_STRING ltrim(DCONFIG_STRING str)
+SLCONFIG_STRING ltrim(SLCONFIG_STRING str)
 {
 	while(str.start < str.end && is_whitespace(*str.start))
 		str.start++;
@@ -30,7 +30,7 @@ DCONFIG_STRING ltrim(DCONFIG_STRING str)
 }
 
 static
-bool eat_newline(DCONFIG_STRING *str, size_t* line)
+bool eat_newline(SLCONFIG_STRING *str, size_t* line)
 {
 	bool ret = false;
 	while(str->start < str->end)
@@ -60,7 +60,7 @@ bool eat_newline(DCONFIG_STRING *str, size_t* line)
 }
 
 static
-bool token_character(DCONFIG_STRING *str, TOKEN* token, char c, TOKEN_TYPE type)
+bool token_character(SLCONFIG_STRING *str, TOKEN* token, char c, TOKEN_TYPE type)
 {
 	if(*str->start == c)
 	{
@@ -79,10 +79,10 @@ bool token_character(DCONFIG_STRING *str, TOKEN* token, char c, TOKEN_TYPE type)
 }
 
 static
-bool token_string(DCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
+bool token_string(SLCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 {
-	DCONFIG_STRING pre_quote;
-	DCONFIG_STRING post_quote;
+	SLCONFIG_STRING pre_quote;
+	SLCONFIG_STRING post_quote;
 	bool first_quote = false;
 	bool second_quote = false;
 	size_t start_line = state->line;
@@ -94,19 +94,19 @@ bool token_string(DCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 		{
 			post_quote.end = str->start;
 			
-			if(dcfg_string_equal(pre_quote, post_quote))
+			if(slc_string_equal(pre_quote, post_quote))
 			{
 				if(is_naked_string_character(*str->start))
 				{
-					_dcfg_print_error_prefix(state->filename, state->line, state->vtable);
-					state->vtable->stderr(dcfg_from_c_str("Error: Unexpected character '"));
-					DCONFIG_STRING c = {str->start, str->start + 1};
+					_slc_print_error_prefix(state->filename, state->line, state->vtable);
+					state->vtable->stderr(slc_from_c_str("Error: Unexpected character '"));
+					SLCONFIG_STRING c = {str->start, str->start + 1};
 					state->vtable->stderr(c);
 						
-					if(dcfg_string_length(pre_quote) == 0)
-						state->vtable->stderr(dcfg_from_c_str("' after quoted string.\n"));
+					if(slc_string_length(pre_quote) == 0)
+						state->vtable->stderr(slc_from_c_str("' after quoted string.\n"));
 					else
-						state->vtable->stderr(dcfg_from_c_str("' after final heredoc string sentinel.\n"));
+						state->vtable->stderr(slc_from_c_str("' after final heredoc string sentinel.\n"));
 					token->type = TOKEN_ERROR;
 				}
 				goto exit;
@@ -137,8 +137,8 @@ bool token_string(DCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 			str->start++;
 	}
 	
-	_dcfg_print_error_prefix(state->filename, start_line, state->vtable);
-	state->vtable->stderr(dcfg_from_c_str("Error: Unterminated string.\n"));
+	_slc_print_error_prefix(state->filename, start_line, state->vtable);
+	state->vtable->stderr(slc_from_c_str("Error: Unterminated string.\n"));
 	token->type = TOKEN_ERROR;
 	return true;
 exit:
@@ -156,7 +156,7 @@ exit:
 }
 
 static
-bool token_line_comment(DCONFIG_STRING* str, TOKEN* token)
+bool token_line_comment(SLCONFIG_STRING* str, TOKEN* token)
 {
 	if(str->start < str->end && *str->start == '/')
 	{
@@ -185,7 +185,7 @@ bool token_line_comment(DCONFIG_STRING* str, TOKEN* token)
 }
 
 static
-bool token_block_comment(DCONFIG_STRING* str, TOKEN* token, TOKENIZER_STATE* state)
+bool token_block_comment(SLCONFIG_STRING* str, TOKEN* token, TOKENIZER_STATE* state)
 {
 	if(*str->start == '/')
 	{
@@ -231,8 +231,8 @@ bool token_block_comment(DCONFIG_STRING* str, TOKEN* token, TOKENIZER_STATE* sta
 					str->start++;
 			}
 
-			_dcfg_print_error_prefix(state->filename, start_line, state->vtable);
-			state->vtable->stderr(dcfg_from_c_str("Error: Unterminated block comment.\n"));
+			_slc_print_error_prefix(state->filename, start_line, state->vtable);
+			state->vtable->stderr(slc_from_c_str("Error: Unterminated block comment.\n"));
 			token->type = TOKEN_ERROR;
 			return true;
 		exit:
@@ -247,7 +247,7 @@ bool token_block_comment(DCONFIG_STRING* str, TOKEN* token, TOKENIZER_STATE* sta
 	return false;
 }
 
-TOKEN _dcfg_get_next_token(TOKENIZER_STATE* state)
+TOKEN _slc_get_next_token(TOKENIZER_STATE* state)
 {
 	const char* old_start;
 	/* Eat whitespace */
@@ -265,7 +265,7 @@ TOKEN _dcfg_get_next_token(TOKENIZER_STATE* state)
 	if(state->str.start == state->str.end)
 	{
 		ret.type = TOKEN_EOF;
-		ret.str = dcfg_from_c_str("<EOF>");
+		ret.str = slc_from_c_str("<EOF>");
 		goto exit;
 	}
 	if(token_character(&state->str, &ret, '$', TOKEN_DOLLAR))

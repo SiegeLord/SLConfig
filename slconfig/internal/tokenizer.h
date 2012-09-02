@@ -1,9 +1,9 @@
-#ifndef INTERNAL_TOKENIZER_H
-#define INTERNAL_TOKENIZER_H
+#ifndef _INTERNAL_TOKENIZER_H
+#define _INTERNAL_TOKENIZER_H
 
 #include <stdbool.h>
 
-#include "dconfig/dconfig.h"
+#include "slconfig/slconfig.h"
 
 #define LF ('\x0A')
 #define CR ('\x0D')
@@ -26,20 +26,20 @@ typedef enum
 typedef struct
 {
 	TOKEN_TYPE type;
-	DCONFIG_STRING str;
+	SLCONFIG_STRING str;
 	size_t line;
 	bool own;
 } TOKEN;
 
 typedef struct
 {
-	DCONFIG_STRING filename;
-	DCONFIG_STRING str;
+	SLCONFIG_STRING filename;
+	SLCONFIG_STRING str;
 	size_t line;
-	DCONFIG_VTABLE* vtable;
+	SLCONFIG_VTABLE* vtable;
 	TOKEN cur_token;
 } TOKENIZER_STATE;
 
-TOKEN _dcfg_get_next_token(TOKENIZER_STATE* state);
+TOKEN _slc_get_next_token(TOKENIZER_STATE* state);
 
 #endif
