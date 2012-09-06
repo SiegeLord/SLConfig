@@ -9,20 +9,22 @@ void print_delegate(SLCONFIG_NODE* node, int level)
 	indent[level] = '\0';
 	memset(indent, '\t', level);
 	
-	for(size_t ii = 0; ii < node->num_children; ii++)
+	for(size_t ii = 0; ii < slc_get_num_children(node); ii++)
 	{
-		SLCONFIG_NODE* child = node->children[ii];
-		if(child->parent)
-		{
-			//printf("Parent: %.*s : %p\n", (int)slc_string_length(child->parent->name), child->parent->name.start, child->parent);
-		}
-		printf("%s/*\n%s%.*s\n%s*/\n", indent, indent, (int)slc_string_length(child->comment), child->comment.start, indent);
+		SLCONFIG_NODE* child = slc_get_children(node)[ii];
+
+		SLCONFIG_STRING type = slc_get_type(child);
+		SLCONFIG_STRING comment = slc_get_comment(child);
+		
+		printf("%s/*\n%s%.*s\n%s*/\n", indent, indent, (int)slc_string_length(comment), comment.start, indent);
+		
 		SLCONFIG_STRING full_name = slc_get_full_name(child);
-		printf("%s(%.*s) %.*s", indent, (int)slc_string_length(child->type), child->type.start,
+		printf("%s(%.*s) %.*s", indent, (int)slc_string_length(type), type.start,
 		       (int)slc_string_length(full_name), full_name.start
 		      );
 		free((void*)full_name.start);
-		if(child->is_aggregate)
+		
+		if(slc_is_aggregate(child))
 		{
 			printf("\n%s{\n", indent);
 			print_delegate(child, level + 1);
@@ -30,7 +32,8 @@ void print_delegate(SLCONFIG_NODE* node, int level)
 		}
 		else
 		{
-			printf(" = %.*s\n", (int)slc_string_length(child->value), child->value.start);
+			SLCONFIG_STRING value = slc_get_value(child);
+			printf(" = %.*s\n", (int)slc_string_length(value), value.start);
 		}
 	}
 	

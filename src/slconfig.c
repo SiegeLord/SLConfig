@@ -243,7 +243,7 @@ SLCONFIG_NODE* slc_get_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING name)
 	return 0;
 }
 
-SLCONFIG_NODE* _slc_add_node_no_attach(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type, bool own_type, SLCONFIG_STRING name, bool own_name, bool is_aggregate)
+SLCONFIG_NODE* _slc_add_node_no_attach(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type, bool copy_type, SLCONFIG_STRING name, bool copy_name, bool is_aggregate)
 {
 	if(!aggregate)
 		return 0;
@@ -262,10 +262,17 @@ SLCONFIG_NODE* _slc_add_node_no_attach(SLCONFIG_NODE* aggregate, SLCONFIG_STRING
 	child = aggregate->config->vtable.realloc(0, sizeof(SLCONFIG_NODE));
 	memset(child, 0, sizeof(SLCONFIG_NODE));
 	child->is_aggregate = is_aggregate;
-	child->name = name;
-	child->own_name = own_name;
-	child->type = type;
-	child->own_type = own_type;
+	if(copy_name)
+		slc_append_to_string(&child->name, name, aggregate->config->vtable.realloc);
+	else
+		child->name = name;
+	child->own_name = copy_name;
+	
+	if(copy_type)
+		slc_append_to_string(&child->type, type, aggregate->config->vtable.realloc);
+	else
+		child->type = type;
+	child->own_type = copy_type;
 	child->config = aggregate->config;
 	
 	//printf("%.*s : %p\n", (int)slc_string_length(name), name.start, child);
@@ -340,6 +347,62 @@ bool slc_set_value(SLCONFIG_NODE* node, SLCONFIG_STRING value, bool copy)
 	}
 	node->own_value = copy;
 	return true;
+}
+
+SLCONFIG_STRING slc_get_value(SLCONFIG_NODE* node)
+{
+	assert(node);
+	if(node->is_aggregate)
+	{
+		SLCONFIG_STRING ret = {0, 0};
+		return ret;
+	}
+	else
+	{
+		return node->value;
+	}
+}
+
+bool slc_is_aggregate(SLCONFIG_NODE* node)
+{
+	assert(node);
+	return node->is_aggregate;
+}
+
+SLCONFIG_STRING slc_get_type(SLCONFIG_NODE* node)
+{
+	assert(node);
+	return node->type;
+}
+
+SLCONFIG_STRING slc_get_name(SLCONFIG_NODE* node)
+{
+	assert(node);
+	return node->name;
+}
+
+SLCONFIG_STRING slc_get_comment(SLCONFIG_NODE* node)
+{
+	assert(node);
+	return node->comment;
+}
+
+SLCONFIG_NODE** slc_get_children(SLCONFIG_NODE* node)
+{
+	assert(node);
+	if(node->is_aggregate)
+		return node->children;
+	else
+		return 0;
+}
+
+size_t slc_get_num_children(SLCONFIG_NODE* node)
+{
+	assert(node);
+	if(node->is_aggregate)
+		return node->num_children;
+	else
+		return 0;
 }
 
 void _slc_copy_into(SLCONFIG_NODE* dest, SLCONFIG_NODE* src)

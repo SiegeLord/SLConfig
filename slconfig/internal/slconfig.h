@@ -13,8 +13,28 @@ struct SLCONFIG
 	SLCONFIG_VTABLE vtable;
 };
 
+struct SLCONFIG_NODE
+{
+	SLCONFIG_STRING type;
+	bool own_type;
+	SLCONFIG_STRING name;
+	bool own_name;
+	SLCONFIG_STRING value;
+	bool own_value;
+	SLCONFIG_STRING comment;
+	bool own_comment;
+	
+	SLCONFIG_NODE** children;
+	size_t num_children;
+	
+	void* user_data;
+	SLCONFIG_NODE* parent;
+	bool is_aggregate;
+	SLCONFIG* config;
+};
+
 SLCONFIG_NODE* _slc_search_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING name);
-SLCONFIG_NODE* _slc_add_node_no_attach(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type, bool own_type, SLCONFIG_STRING name, bool own_name, bool is_aggregate);
+SLCONFIG_NODE* _slc_add_node_no_attach(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type, bool copy_type, SLCONFIG_STRING name, bool copy_name, bool is_aggregate);
 void _slc_attach_node(SLCONFIG_NODE* aggregate, SLCONFIG_NODE* node);
 void _slc_copy_into(SLCONFIG_NODE* dest, SLCONFIG_NODE* src);
 void _slc_destroy_node(SLCONFIG_NODE* node, bool detach);
