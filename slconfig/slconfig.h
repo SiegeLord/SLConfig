@@ -50,8 +50,8 @@ struct SLCONFIG_NODE
 
 SLCONFIG* slc_load_config(SLCONFIG_STRING filename);
 SLCONFIG* slc_load_config_vtable(SLCONFIG_STRING filename, SLCONFIG_VTABLE vtable);
-SLCONFIG* slc_load_config_string(SLCONFIG_STRING filename, SLCONFIG_STRING file);
-SLCONFIG* slc_load_config_string_vtable(SLCONFIG_STRING filename, SLCONFIG_STRING file, SLCONFIG_VTABLE vtable);
+SLCONFIG* slc_load_config_string(SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy);
+SLCONFIG* slc_load_config_string_vtable(SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy, SLCONFIG_VTABLE vtable);
 SLCONFIG_NODE* slc_get_root(SLCONFIG* config);
 SLCONFIG_STRING slc_get_full_name(SLCONFIG_NODE* node);
 

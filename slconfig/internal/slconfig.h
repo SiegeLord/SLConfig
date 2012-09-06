@@ -19,5 +19,6 @@ void _slc_attach_node(SLCONFIG_NODE* aggregate, SLCONFIG_NODE* node);
 void _slc_copy_into(SLCONFIG_NODE* dest, SLCONFIG_NODE* src);
 void _slc_destroy_node(SLCONFIG_NODE* node, bool detach);
 void _slc_free(SLCONFIG* config, void*);
+void _slc_add_file(SLCONFIG* config, SLCONFIG_STRING new_file);
 
 #endif

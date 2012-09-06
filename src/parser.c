@@ -443,6 +443,7 @@ bool parse_assign_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_
 				
 				for(size_t ii = 0; ii < lhs->num_children; ii++)
 					_slc_destroy_node(lhs->children[ii], false);
+				_slc_free(config, lhs->children);
 				
 				memcpy(lhs, &temp_node, sizeof(SLCONFIG_NODE));
 				if(is_new)
@@ -648,17 +649,13 @@ bool parse_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* s
 	return true;
 }
 
-/* Note that the file is assumed to be owned by the config */
 bool _slc_parse_file(SLCONFIG* config, SLCONFIG_NODE* root, SLCONFIG_STRING filename, SLCONFIG_STRING file)
 {
 	TOKENIZER_STATE state;
 	state.filename = filename;
-	state.str = file;
 	state.line = 1;
 	state.vtable = &config->vtable;
-	
-	config->files = config->vtable.realloc(config->files, (config->num_files + 1) * sizeof(SLCONFIG_STRING));
-	config->files[config->num_files++] = file;
+	state.str = file;
 	
 	PARSER_STATE parser_state;
 	memset(&parser_state, 0, sizeof(PARSER_STATE));
@@ -667,8 +664,13 @@ bool _slc_parse_file(SLCONFIG* config, SLCONFIG_NODE* root, SLCONFIG_STRING file
 	parser_state.filename = filename;
 	parser_state.vtable = &config->vtable;
 	
+	bool ret;
 	if(advance(&parser_state))
-		return parse_aggregate(config, root, &parser_state);
+		ret = parse_aggregate(config, root, &parser_state);
 	else
-		return false;
+		ret = false;
+	
+	_slc_free(config, (void*)parser_state.comment.start);
+	
+	return ret;
 }

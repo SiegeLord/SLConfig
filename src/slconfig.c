@@ -93,15 +93,17 @@ SLCONFIG* slc_load_config_vtable(SLCONFIG_STRING filename, SLCONFIG_VTABLE vtabl
 	file.start = buff;
 	file.end = buff + total_bytes_read;
 	
-	return slc_load_config_string_vtable(filename, file, vtable);
+	SLCONFIG* ret = slc_load_config_string_vtable(filename, file, false, vtable);
+	_slc_add_file(ret, file);
+	return ret;
 }
 
-SLCONFIG* slc_load_config_string(SLCONFIG_STRING filename, SLCONFIG_STRING file)
+SLCONFIG* slc_load_config_string(SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy)
 {
-	return slc_load_config_string_vtable(filename, file, default_vtable);
+	return slc_load_config_string_vtable(filename, file, copy, default_vtable);
 }
 
-SLCONFIG* slc_load_config_string_vtable(SLCONFIG_STRING filename, SLCONFIG_STRING file, SLCONFIG_VTABLE vtable)
+SLCONFIG* slc_load_config_string_vtable(SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy, SLCONFIG_VTABLE vtable)
 {
 	fill_vtable(&vtable);
 	
@@ -114,7 +116,18 @@ SLCONFIG* slc_load_config_string_vtable(SLCONFIG_STRING filename, SLCONFIG_STRIN
 	ret->root->is_aggregate = true;
 	ret->root->config = ret;
 	
-	if(!_slc_parse_file(ret, ret->root, filename, file))
+	SLCONFIG_STRING new_file = {0, 0};
+	if(copy)
+	{
+		slc_append_to_string(&new_file, file, ret->vtable.realloc);
+		_slc_add_file(ret, new_file);
+	}
+	else
+	{
+		new_file = file;
+	}
+	
+	if(!_slc_parse_file(ret, ret->root, filename, new_file))
 	{
 		slc_destroy_config(ret);
 		return 0;
@@ -136,6 +149,12 @@ void slc_destroy_config(SLCONFIG* config)
 	_slc_free(config, config->files);
 	
 	_slc_free(config, config);
+}
+
+void _slc_add_file(SLCONFIG* config, SLCONFIG_STRING new_file)
+{
+	config->files = config->vtable.realloc(config->files, (config->num_files + 1) * sizeof(SLCONFIG_STRING));
+	config->files[config->num_files++] = new_file;
 }
 
 static
@@ -168,7 +187,7 @@ void _slc_destroy_node(SLCONFIG_NODE* node, bool detach)
 	if(!node)
 		return;
 	
-	//printf("Clearing %.*s %zu\n", (int)slc_string_length(node->name), node->name.start, node->num_children);
+	//printf("Clearing %.*s %zu %d\n", (int)slc_string_length(node->name), node->name.start, node->num_children, node->own_comment);
 	if(node->own_type)
 		_slc_free(node->config, (void*)node->type.start);
 

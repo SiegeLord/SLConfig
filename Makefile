@@ -1,7 +1,7 @@
 include build/commands.make
 
 CC = gcc
-C_FLAGS = -Wall -Wextra --std=c99 -I.
+C_FLAGS = -g -Wall -Wextra --std=c99 -I.
 
 LIB_SOURCES = $(wildcard src/*.c)
 LIB_OBJS = $(patsubst src/%.c, .objs/%.o, $(LIB_SOURCES))
