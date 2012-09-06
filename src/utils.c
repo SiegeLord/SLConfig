@@ -4,9 +4,6 @@
 #include <string.h>
 #include <stdio.h>
 
-/*
- * Append a string to a string, using a custom realloc (stdc's realloc is used if 0 is passed).
- */
 void slc_append_to_string(SLCONFIG_STRING* dest, SLCONFIG_STRING new_str, void* (*custom_realloc)(void*, size_t))
 {
 	if(!custom_realloc)
@@ -18,6 +15,9 @@ void slc_append_to_string(SLCONFIG_STRING* dest, SLCONFIG_STRING new_str, void* 
 	dest->end = dest->start + new_length;
 }
 
+/*
+ * Just print a standard error prefix
+ */
 void _slc_print_error_prefix(SLCONFIG_STRING filename, size_t line, SLCONFIG_VTABLE* table)
 {
 	table->stderr(filename);
@@ -28,6 +28,9 @@ void _slc_print_error_prefix(SLCONFIG_STRING filename, size_t line, SLCONFIG_VTA
 	table->stderr(slc_from_c_str(": "));
 }
 
+/*
+ * Error: Expected <expected> after '<after>', not '<actual>'
+ */
 void _slc_expected_after_error(TOKENIZER_STATE* state, size_t line, SLCONFIG_STRING expected, SLCONFIG_STRING after, SLCONFIG_STRING actual)
 {
 	_slc_print_error_prefix(state->filename, line, state->vtable);
@@ -40,6 +43,9 @@ void _slc_expected_after_error(TOKENIZER_STATE* state, size_t line, SLCONFIG_STR
 	state->vtable->stderr(slc_from_c_str("'.\n"));
 }
 
+/*
+ * Error: Expected '<expected>' not '<actual>'
+ */
 void _slc_expected_error(TOKENIZER_STATE* state, size_t line, SLCONFIG_STRING expected, SLCONFIG_STRING actual)
 {
 	_slc_print_error_prefix(state->filename, line, state->vtable);
@@ -87,6 +93,9 @@ char* slc_to_c_str(SLCONFIG_STRING str)
 	return ret;
 }
 
+/*
+ * Just to avoid realloc(0, 0) and make the intention clear
+ */
 void _slc_free(SLCONFIG* config, void* ptr)
 {
 	if(ptr)

@@ -7,6 +7,7 @@
 #include <string.h>
 #include <assert.h>
 
+/* A wrapper around TOKENIZER_STATE to additionally hold machinery that chomps up the docstrings */
 typedef struct
 {
 	SLCONFIG_STRING comment;
@@ -23,6 +24,7 @@ typedef struct
 
 static bool parse_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state);
 
+/* Wrapper around _slc_get_next_token to chomp up the docstrings and ignore comments. */
 static
 bool advance(PARSER_STATE* state)
 {
@@ -61,6 +63,10 @@ bool advance(PARSER_STATE* state)
 		return true;
 }
 
+/*
+ * Used in conjunction with advance to specify which node receives comments. Comments before a node and before a semicolon or opening brace get
+ * attached to that node.
+ */
 static
 void set_new_node(PARSER_STATE* state, SLCONFIG_NODE* node, size_t line)
 {
@@ -79,6 +85,9 @@ void set_new_node(PARSER_STATE* state, SLCONFIG_NODE* node, size_t line)
 	state->last_node_line = line;
 }
 
+/*
+ * Parse a node reference statement given the first name in the refence statement
+ */
 static
 bool parse_node_ref_name(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_STRING name, size_t name_line, SLCONFIG_NODE** ref_node, PARSER_STATE* state)
 {
@@ -86,6 +95,7 @@ bool parse_node_ref_name(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_ST
 	SLCONFIG_NODE* ret = 0;
 	while(true)
 	{
+		/* The idea here is to prevent going up the hierarchy once we went down one step in it */
 		if(ret == 0)
 			ret = _slc_search_node(aggregate, name);
 		else
@@ -138,6 +148,9 @@ bool parse_node_ref_name(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_ST
 	}
 }
 
+/*
+ * Parse a node reference statement
+ */
 static
 bool parse_node_ref(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_NODE** ref_node, PARSER_STATE* state)
 {
@@ -175,6 +188,7 @@ bool parse_node_ref(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_NODE** 
 	return parse_node_ref_name(config, aggregate, name, name_line, ref_node, state);
 }
 
+/* Get the string value of a single expression on the right hand side of a string assign statement and append it to the current rhs string */
 static
 bool parse_right_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_STRING* rhs, PARSER_STATE* state)
 {	
@@ -226,6 +240,10 @@ bool parse_right_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_
 	return true;
 }
 
+/*
+ * Parse the left-hand side expression of an assign statement. Tricky bit is determining whether an existing node needs to be found
+ * or a new node needs to be created
+ */
 static
 bool parse_left_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_NODE** lhs_node, bool* expect_assign, PARSER_STATE* state)
 {
@@ -344,6 +362,7 @@ bool parse_left_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_N
 	return parse_node_ref_name(config, aggregate, name, name_line, lhs_node, state);
 }
 
+/* Parse an assign statement */
 static
 bool parse_assign_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
 {
@@ -406,6 +425,7 @@ bool parse_assign_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_
 				set_new_node(state, lhs, state->line);
 				was_aggregate = true;
 				
+				/* A temporary is created so that we can keep referencing the original node before it gets overwritten */
 				SLCONFIG_NODE temp_node;
 				memset(&temp_node, 0, sizeof(SLCONFIG_NODE));
 				temp_node.parent = aggregate;
@@ -460,6 +480,7 @@ error:
 	return false;
 }
 
+/* Parse the remove statement*/
 static
 bool parse_remove(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
 {
@@ -483,6 +504,7 @@ bool parse_remove(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* stat
 	return true;
 }
 
+/* Parse an expand aggregate statement */
 static
 bool parse_expand_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
 {
@@ -571,6 +593,7 @@ bool parse_expand_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_S
 	return true;
 }
 
+/* Chomp up the statements in the root, or between braces in an aggregate. The braces are taken care of by this function */
 static
 bool parse_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
 {
