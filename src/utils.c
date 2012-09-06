@@ -4,6 +4,9 @@
 #include <string.h>
 #include <stdio.h>
 
+/*
+ * Append a string to a string, using a custom realloc (stdc's realloc is used if 0 is passed).
+ */
 void slc_append_to_string(SLCONFIG_STRING* dest, SLCONFIG_STRING new_str, void* (*custom_realloc)(void*, size_t))
 {
 	if(!custom_realloc)
