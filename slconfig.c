@@ -303,15 +303,23 @@ SLCONFIG_STRING slc_get_full_name(SLCONFIG_NODE* node)
 	return ret;
 }
 
-bool slc_set_value(SLCONFIG_NODE* node, SLCONFIG_STRING value, bool own)
+bool slc_set_value(SLCONFIG_NODE* node, SLCONFIG_STRING value, bool copy)
 {
 	assert(node);
 	if(node->is_aggregate)
 		return false;
 	if(node->own_value)
 		_slc_free(node->config, (void*)node->value.start);
-	node->value = value;
-	node->own_value = own;
+	if(copy)
+	{
+		node->value.start = node->value.end = 0;
+		slc_append_to_string(&node->value, value, node->config->vtable.realloc);
+	}
+	else
+	{
+		node->value = value;
+	}
+	node->own_value = copy;
 	return true;
 }
 
