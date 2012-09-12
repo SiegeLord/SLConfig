@@ -38,10 +38,10 @@ bool slc_load_config_string(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG
 SLCONFIG_NODE* slc_get_root(SLCONFIG* config);
 SLCONFIG_STRING slc_get_full_name(SLCONFIG_NODE* node);
 
-SLCONFIG_NODE* slc_add_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type, bool own_type, SLCONFIG_STRING name, bool own_name, bool is_aggregate);
+SLCONFIG_NODE* slc_add_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type, bool copy_type, SLCONFIG_STRING name, bool copy_name, bool is_aggregate);
 SLCONFIG_NODE* slc_get_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING name);
 
-bool slc_set_value(SLCONFIG_NODE* node, SLCONFIG_STRING value, bool own);
+bool slc_set_value(SLCONFIG_NODE* node, SLCONFIG_STRING value, bool copy);
 size_t slc_get_num_children(SLCONFIG_NODE* node);
 SLCONFIG_NODE** slc_get_children(SLCONFIG_NODE* node);
 SLCONFIG_STRING slc_get_name(SLCONFIG_NODE* node);
