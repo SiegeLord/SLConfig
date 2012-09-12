@@ -22,7 +22,7 @@ void print_delegate(SLCONFIG_NODE* node, int level)
 		printf("%s(%.*s) %.*s", indent, (int)slc_string_length(type), type.start,
 		       (int)slc_string_length(full_name), full_name.start
 		      );
-		free((void*)full_name.start);
+		slc_destroy_string(&full_name, 0);
 		
 		if(slc_is_aggregate(child))
 		{
