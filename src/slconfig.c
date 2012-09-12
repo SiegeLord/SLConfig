@@ -64,47 +64,13 @@ void fill_vtable(SLCONFIG_VTABLE* vtable)
 #undef FILL
 }
 
-SLCONFIG* slc_load_config(SLCONFIG_STRING filename)
+SLCONFIG* slc_create_config(const SLCONFIG_VTABLE* vtable_ptr)
 {
-	return slc_load_config_vtable(filename, default_vtable);
-}
-
-SLCONFIG* slc_load_config_vtable(SLCONFIG_STRING filename, SLCONFIG_VTABLE vtable)
-{
-	SLCONFIG_STRING file;
-	
-	fill_vtable(&vtable);
-
-#define BUF_SIZE (1024)
-	size_t total_bytes_read = 0;
-	size_t bytes_read;
-	char* buff = 0;
-	void* f = vtable.fopen(filename, slc_from_c_str("rb"));
-	
-	do
-	{
-		buff = vtable.realloc(buff, total_bytes_read + BUF_SIZE);
-		bytes_read = vtable.fread(buff + total_bytes_read, 1, BUF_SIZE, f);
-		total_bytes_read += bytes_read;
-	} while(bytes_read == BUF_SIZE);
-	
-	vtable.fclose(f);
-	
-	file.start = buff;
-	file.end = buff + total_bytes_read;
-	
-	SLCONFIG* ret = slc_load_config_string_vtable(filename, file, false, vtable);
-	_slc_add_file(ret, file);
-	return ret;
-}
-
-SLCONFIG* slc_load_config_string(SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy)
-{
-	return slc_load_config_string_vtable(filename, file, copy, default_vtable);
-}
-
-SLCONFIG* slc_load_config_string_vtable(SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy, SLCONFIG_VTABLE vtable)
-{
+	SLCONFIG_VTABLE vtable;
+	if(vtable_ptr)
+		memcpy(&vtable, vtable_ptr, sizeof(SLCONFIG_VTABLE));
+	else
+		memset(&vtable, 0, sizeof(SLCONFIG_VTABLE));
 	fill_vtable(&vtable);
 	
 	SLCONFIG* ret = vtable.realloc(0, sizeof(SLCONFIG));
@@ -116,24 +82,53 @@ SLCONFIG* slc_load_config_string_vtable(SLCONFIG_STRING filename, SLCONFIG_STRIN
 	ret->root->is_aggregate = true;
 	ret->root->config = ret;
 	
+	return ret;
+}
+
+bool slc_load_config(SLCONFIG* config, SLCONFIG_STRING filename)
+{
+	assert(config);
+	SLCONFIG_STRING file;
+
+#define BUF_SIZE (1024)
+	size_t total_bytes_read = 0;
+	size_t bytes_read;
+	char* buff = 0;
+	void* f = config->vtable.fopen(filename, slc_from_c_str("rb"));
+	
+	do
+	{
+		buff = config->vtable.realloc(buff, total_bytes_read + BUF_SIZE);
+		bytes_read = config->vtable.fread(buff + total_bytes_read, 1, BUF_SIZE, f);
+		total_bytes_read += bytes_read;
+	} while(bytes_read == BUF_SIZE);
+	
+	config->vtable.fclose(f);
+	
+	file.start = buff;
+	file.end = buff + total_bytes_read;
+	
+	bool ret = slc_load_config_string(config, filename, file, false);
+	if(ret)
+		_slc_add_file(config, file);
+	return ret;
+}
+
+bool slc_load_config_string(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy)
+{	
+	assert(config);
 	SLCONFIG_STRING new_file = {0, 0};
 	if(copy)
 	{
-		slc_append_to_string(&new_file, file, ret->vtable.realloc);
-		_slc_add_file(ret, new_file);
+		slc_append_to_string(&new_file, file, config->vtable.realloc);
+		_slc_add_file(config, new_file);
 	}
 	else
 	{
 		new_file = file;
 	}
 	
-	if(!_slc_parse_file(ret, ret->root, filename, new_file))
-	{
-		slc_destroy_config(ret);
-		return 0;
-	}
-	
-	return ret;
+	return _slc_parse_file(config, config->root, filename, new_file);
 }
 
 void slc_destroy_config(SLCONFIG* config)
@@ -153,6 +148,7 @@ void slc_destroy_config(SLCONFIG* config)
 
 void _slc_add_file(SLCONFIG* config, SLCONFIG_STRING new_file)
 {
+	assert(config);
 	config->files = config->vtable.realloc(config->files, (config->num_files + 1) * sizeof(SLCONFIG_STRING));
 	config->files[config->num_files++] = new_file;
 }

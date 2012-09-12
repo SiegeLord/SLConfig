@@ -42,12 +42,13 @@ void print_delegate(SLCONFIG_NODE* node, int level)
 
 int main()
 {
-	SLCONFIG* config = slc_load_config(slc_from_c_str("test.cfg"));
-	if(!config)
-		return 1;
-	printf("Done!\n\n");
-	SLCONFIG_NODE* root = slc_get_root(config);
-	print_delegate(root, 0);
+	SLCONFIG* config = slc_create_config(0);
+	if(slc_load_config(config, slc_from_c_str("test.cfg")))
+	{
+		printf("Done!\n\n");
+		SLCONFIG_NODE* root = slc_get_root(config);
+		print_delegate(root, 0);
+	}
 	slc_destroy_config(config);
 	return 0;
 }

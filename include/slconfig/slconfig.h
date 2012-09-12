@@ -28,10 +28,12 @@ void slc_append_to_string(SLCONFIG_STRING* dest, SLCONFIG_STRING new_str, void* 
 typedef struct SLCONFIG SLCONFIG;
 typedef struct SLCONFIG_NODE SLCONFIG_NODE;
 
-SLCONFIG* slc_load_config(SLCONFIG_STRING filename);
-SLCONFIG* slc_load_config_vtable(SLCONFIG_STRING filename, SLCONFIG_VTABLE vtable);
-SLCONFIG* slc_load_config_string(SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy);
-SLCONFIG* slc_load_config_string_vtable(SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy, SLCONFIG_VTABLE vtable);
+SLCONFIG* slc_create_config(const SLCONFIG_VTABLE* vtable);
+void slc_destroy_config(SLCONFIG* config);
+
+bool slc_load_config(SLCONFIG* config, SLCONFIG_STRING filename);
+bool slc_load_config_string(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy);
+
 SLCONFIG_NODE* slc_get_root(SLCONFIG* config);
 SLCONFIG_STRING slc_get_full_name(SLCONFIG_NODE* node);
 
@@ -47,7 +49,6 @@ bool slc_is_aggregate(SLCONFIG_NODE* node);
 SLCONFIG_STRING slc_get_value(SLCONFIG_NODE* node);
 SLCONFIG_STRING slc_get_comment(SLCONFIG_NODE* node);
 
-void slc_destroy_config(SLCONFIG* config);
 void slc_destroy_node(SLCONFIG_NODE* node);
 
 #endif
