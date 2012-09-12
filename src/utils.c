@@ -15,6 +15,15 @@ void slc_append_to_string(SLCONFIG_STRING* dest, SLCONFIG_STRING new_str, void* 
 	dest->end = dest->start + new_length;
 }
 
+void slc_destroy_string(SLCONFIG_STRING* str, void* (*custom_realloc)(void*, size_t))
+{
+	if(!custom_realloc)
+		custom_realloc = &realloc;
+	if(str->start)
+		custom_realloc((void*)str->start, 0);
+	str->start = str->end = 0;
+}
+
 /*
  * Just print a standard error prefix
  */

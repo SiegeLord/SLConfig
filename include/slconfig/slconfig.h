@@ -24,6 +24,7 @@ bool slc_string_equal(SLCONFIG_STRING a, SLCONFIG_STRING b);
 SLCONFIG_STRING slc_from_c_str(const char* str);
 char* slc_to_c_str(SLCONFIG_STRING str);
 void slc_append_to_string(SLCONFIG_STRING* dest, SLCONFIG_STRING new_str, void* (*custom_realloc)(void*, size_t));
+void slc_destroy_string(SLCONFIG_STRING* str, void* (*custom_realloc)(void*, size_t));
 
 typedef struct SLCONFIG SLCONFIG;
 typedef struct SLCONFIG_NODE SLCONFIG_NODE;

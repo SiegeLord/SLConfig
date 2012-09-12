@@ -106,7 +106,7 @@ bool parse_node_ref_name(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_ST
 			state->vtable->stderr(slc_from_c_str("Error: '"));
 			SLCONFIG_STRING full_name = slc_get_full_name(aggregate);
 			state->vtable->stderr(full_name);
-			_slc_free(config, (void*)full_name.start);
+			slc_destroy_string(&full_name, config->vtable.realloc);
 			state->vtable->stderr(slc_from_c_str(":"));
 			state->vtable->stderr(name);
 			state->vtable->stderr(slc_from_c_str("' does not exist.\n"));
@@ -121,7 +121,7 @@ bool parse_node_ref_name(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_ST
 				state->vtable->stderr(slc_from_c_str("Error: '"));
 				SLCONFIG_STRING full_name = slc_get_full_name(ret);
 				state->vtable->stderr(full_name);
-				_slc_free(config, (void*)full_name.start);
+				slc_destroy_string(&full_name, config->vtable.realloc);
 				state->vtable->stderr(slc_from_c_str("' of type '"));
 				state->vtable->stderr(ret->type);
 				state->vtable->stderr(slc_from_c_str("' is not an aggregate.\n"));
@@ -221,7 +221,7 @@ bool parse_right_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_
 			state->vtable->stderr(slc_from_c_str("Error: Trying to extract a string from '"));
 			SLCONFIG_STRING full_name = slc_get_full_name(ref_node);
 			state->vtable->stderr(full_name);
-			_slc_free(config, (void*)full_name.start);
+			slc_destroy_string(&full_name, config->vtable.realloc);
 			state->vtable->stderr(slc_from_c_str("' of type '"));
 			state->vtable->stderr(ref_node->type);
 			state->vtable->stderr(slc_from_c_str("' which is an aggregate.\n"));
@@ -276,7 +276,7 @@ bool parse_left_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_N
 				state->vtable->stderr(slc_from_c_str("Error: Cannot change the type of '"));
 				SLCONFIG_STRING full_name = slc_get_full_name(child);
 				state->vtable->stderr(full_name);
-				_slc_free(config, (void*)full_name.start);
+				slc_destroy_string(&full_name, config->vtable.realloc);
 				state->vtable->stderr(slc_from_c_str("' from '"));
 				state->vtable->stderr(child->type);
 				state->vtable->stderr(slc_from_c_str("' ("));
@@ -385,7 +385,7 @@ bool parse_assign_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_
 					state->vtable->stderr(slc_from_c_str("Error: Trying to assign a string to '"));
 					SLCONFIG_STRING full_name = slc_get_full_name(lhs);
 					state->vtable->stderr(full_name);
-					_slc_free(config, (void*)full_name.start);
+					slc_destroy_string(&full_name, config->vtable.realloc);
 					state->vtable->stderr(slc_from_c_str("' of type '"));
 					state->vtable->stderr(lhs->type);
 					state->vtable->stderr(slc_from_c_str("' which is an aggregate.\n"));
@@ -403,7 +403,7 @@ bool parse_assign_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_
 				} while(state->cur_token.type != TOKEN_SEMICOLON);
 				
 				if(lhs->own_value)
-					_slc_free(config, (void*)lhs->value.start);
+					slc_destroy_string(&lhs->value, config->vtable.realloc);
 				lhs->value = rhs;
 				lhs->own_value = true;
 			}
@@ -415,7 +415,7 @@ bool parse_assign_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_
 					state->vtable->stderr(slc_from_c_str("Error: Trying to assign an aggregate to '"));
 					SLCONFIG_STRING full_name = slc_get_full_name(lhs);
 					state->vtable->stderr(full_name);
-					_slc_free(config, (void*)full_name.start);
+					slc_destroy_string(&full_name, config->vtable.realloc);
 					state->vtable->stderr(slc_from_c_str("' of type '"));
 					state->vtable->stderr(lhs->type);
 					state->vtable->stderr(slc_from_c_str("' which is not an aggregate.\n"));
@@ -524,7 +524,7 @@ bool parse_expand_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_S
 			state->vtable->stderr(slc_from_c_str("Error: Trying to expand '"));
 			SLCONFIG_STRING full_name = slc_get_full_name(ref_node);
 			state->vtable->stderr(full_name);
-			_slc_free(config, (void*)full_name.start);
+			slc_destroy_string(&full_name, config->vtable.realloc);
 			state->vtable->stderr(slc_from_c_str("' of type '"));
 			state->vtable->stderr(ref_node->type);
 			state->vtable->stderr(slc_from_c_str("' which is not an aggregate.\n"));
@@ -545,7 +545,7 @@ bool parse_expand_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_S
 				
 				full_name = slc_get_full_name(ref_node);
 				state->vtable->stderr(full_name);
-				_slc_free(config, (void*)full_name.start);
+				slc_destroy_string(&full_name, config->vtable.realloc);
 				
 				state->vtable->stderr(slc_from_c_str("' of type '"));
 				state->vtable->stderr(ref_node->type);
@@ -553,7 +553,7 @@ bool parse_expand_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_S
 				
 				full_name = slc_get_full_name(child);
 				state->vtable->stderr(full_name);
-				_slc_free(config, (void*)full_name.start);
+				slc_destroy_string(&full_name, config->vtable.realloc);
 				
 				state->vtable->stderr(slc_from_c_str("' of type '"));
 				state->vtable->stderr(child->type);
@@ -563,7 +563,7 @@ bool parse_expand_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_S
 				
 				full_name = slc_get_full_name(old_node);
 				state->vtable->stderr(full_name);
-				_slc_free(config, (void*)full_name.start);
+				slc_destroy_string(&full_name, config->vtable.realloc);
 				
 				state->vtable->stderr(slc_from_c_str("' of type '"));
 				state->vtable->stderr(old_node->type);
@@ -580,7 +580,7 @@ bool parse_expand_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_S
 			_slc_free(config, new_node->children);
 			
 			if(new_node->own_value)
-				_slc_free(config, (void*)new_node->value.start);
+				slc_destroy_string(&new_node->value, config->vtable.realloc);
 			
 			_slc_copy_into(new_node, child);
 		}
@@ -670,7 +670,7 @@ bool _slc_parse_file(SLCONFIG* config, SLCONFIG_NODE* root, SLCONFIG_STRING file
 	else
 		ret = false;
 	
-	_slc_free(config, (void*)parser_state.comment.start);
+	slc_destroy_string(&parser_state.comment, config->vtable.realloc);
 	
 	return ret;
 }

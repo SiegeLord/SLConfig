@@ -139,7 +139,7 @@ void slc_destroy_config(SLCONFIG* config)
 	slc_destroy_node(config->root);
 	
 	for(size_t ii = 0; ii < config->num_files; ii++)
-		_slc_free(config, (void*)config->files[ii].start);
+		slc_destroy_string(&config->files[ii], config->vtable.realloc);
 	
 	_slc_free(config, config->files);
 	
@@ -185,16 +185,16 @@ void _slc_destroy_node(SLCONFIG_NODE* node, bool detach)
 	
 	//printf("Clearing %.*s %zu %d\n", (int)slc_string_length(node->name), node->name.start, node->num_children, node->own_comment);
 	if(node->own_type)
-		_slc_free(node->config, (void*)node->type.start);
+		slc_destroy_string(&node->type, node->config->vtable.realloc);
 
 	if(node->own_name)
-		_slc_free(node->config, (void*)node->name.start);
+		slc_destroy_string(&node->name, node->config->vtable.realloc);
 
 	if(node->own_value)
-		_slc_free(node->config, (void*)node->value.start);
+		slc_destroy_string(&node->value, node->config->vtable.realloc);
 	
 	if(node->own_comment)
-		_slc_free(node->config, (void*)node->comment.start);
+		slc_destroy_string(&node->comment, node->config->vtable.realloc);
 	
 	for(size_t ii = 0; ii < node->num_children; ii++)
 		_slc_destroy_node(node->children[ii], false);
@@ -331,7 +331,7 @@ bool slc_set_value(SLCONFIG_NODE* node, SLCONFIG_STRING value, bool copy)
 	if(node->is_aggregate)
 		return false;
 	if(node->own_value)
-		_slc_free(node->config, (void*)node->value.start);
+		slc_destroy_string(&node->value, node->config->vtable.realloc);
 	if(copy)
 	{
 		node->value.start = node->value.end = 0;
