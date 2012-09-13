@@ -34,6 +34,7 @@ typedef struct
 
 typedef struct
 {
+	SLCONFIG* config;
 	SLCONFIG_STRING filename;
 	SLCONFIG_STRING str;
 	size_t line;

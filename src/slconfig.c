@@ -116,7 +116,7 @@ bool _slc_load_file(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING*
 bool slc_load_config(SLCONFIG* config, SLCONFIG_STRING filename)
 {
 	assert(config);
-	_slc_add_include(config, filename, false);
+	_slc_add_include(config, filename, false, 0);
 	SLCONFIG_STRING file = {0, 0};
 	bool ret = _slc_load_file(config, filename, &file);
 	if(ret)
@@ -139,7 +139,7 @@ bool slc_load_config_string(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG
 		new_file = file;
 	}
 	
-	_slc_add_include(config, filename, false);
+	_slc_add_include(config, filename, false, 0);
 	bool ret = _slc_parse_file(config, config->root, filename, new_file);
 	_slc_clear_includes(config);
 	return ret;
@@ -444,7 +444,7 @@ void _slc_copy_into(SLCONFIG_NODE* dest, SLCONFIG_NODE* src)
 	}
 }
 
-bool _slc_add_include(SLCONFIG* config, SLCONFIG_STRING filename, bool own)
+bool _slc_add_include(SLCONFIG* config, SLCONFIG_STRING filename, bool own, size_t line)
 {
 	assert(config);
 	
@@ -456,9 +456,15 @@ bool _slc_add_include(SLCONFIG* config, SLCONFIG_STRING filename, bool own)
 	
 	config->include_list = config->vtable.realloc(config->include_list, sizeof(SLCONFIG_STRING) * (config->num_includes + 1));
 	config->include_ownerships = config->vtable.realloc(config->include_ownerships, sizeof(bool) * (config->num_includes + 1));
+	config->include_lines = config->vtable.realloc(config->include_lines, sizeof(size_t) * config->num_includes);
+	
 	config->include_list[config->num_includes] = filename;
 	config->include_ownerships[config->num_includes] = own;
+	if(config->num_includes > 0)
+		config->include_lines[config->num_includes - 1] = line;
+	
 	config->num_includes++;
+	
 	return true;
 }
 
@@ -484,9 +490,11 @@ void _slc_clear_includes(SLCONFIG* config)
 	{
 		config->vtable.realloc(config->include_list, 0);
 		config->vtable.realloc(config->include_ownerships, 0);
+		config->vtable.realloc(config->include_lines, 0);
 	}
 	
 	config->include_list = 0;
 	config->include_ownerships = 0;
+	config->include_lines = 0;
 	config->num_includes = 0;
 }

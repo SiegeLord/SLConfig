@@ -14,6 +14,7 @@ struct SLCONFIG
 	
 	/* Include business */
 	SLCONFIG_STRING* include_list;
+	size_t* include_lines;
 	bool* include_ownerships;
 	size_t num_includes;
 };
@@ -47,7 +48,7 @@ void _slc_free(SLCONFIG* config, void*);
 void _slc_add_file(SLCONFIG* config, SLCONFIG_STRING new_file);
 bool _slc_load_file(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING* file);
 
-bool _slc_add_include(SLCONFIG* config, SLCONFIG_STRING filename, bool own);
+bool _slc_add_include(SLCONFIG* config, SLCONFIG_STRING filename, bool own, size_t line);
 void _slc_pop_include(SLCONFIG* config);
 void _slc_clear_includes(SLCONFIG* config);
 

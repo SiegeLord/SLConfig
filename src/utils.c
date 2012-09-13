@@ -27,11 +27,29 @@ void slc_destroy_string(SLCONFIG_STRING* str, void* (*custom_realloc)(void*, siz
 /*
  * Just print a standard error prefix
  */
-void _slc_print_error_prefix(SLCONFIG_STRING filename, size_t line, SLCONFIG_VTABLE* table)
+void _slc_print_error_prefix(SLCONFIG* config, SLCONFIG_STRING filename, size_t line, SLCONFIG_VTABLE* table)
 {
+	char buf[32];
+	if(config->num_includes > 1)
+	{
+		for(size_t ii = 0; ii < config->num_includes - 1; ii++)
+		{
+			if(ii == 0)
+				table->stderr(slc_from_c_str("In file included from "));
+			else
+				table->stderr(slc_from_c_str("                 from "));
+			table->stderr(config->include_list[ii]);
+			table->stderr(slc_from_c_str(":"));
+			snprintf(buf, 32, "%zu", config->include_lines[ii]);
+			table->stderr(slc_from_c_str(buf));
+			if(ii == config->num_includes - 2)
+				table->stderr(slc_from_c_str(":\n"));
+			else
+				table->stderr(slc_from_c_str(",\n"));
+		}
+	}
 	table->stderr(filename);
 	table->stderr(slc_from_c_str(":"));
-	char buf[32];
 	snprintf(buf, 32, "%zu", line);
 	table->stderr(slc_from_c_str(buf));
 	table->stderr(slc_from_c_str(": "));
@@ -40,9 +58,9 @@ void _slc_print_error_prefix(SLCONFIG_STRING filename, size_t line, SLCONFIG_VTA
 /*
  * Error: Expected <expected> after '<after>', not '<actual>'
  */
-void _slc_expected_after_error(TOKENIZER_STATE* state, size_t line, SLCONFIG_STRING expected, SLCONFIG_STRING after, SLCONFIG_STRING actual)
+void _slc_expected_after_error(SLCONFIG* config, TOKENIZER_STATE* state, size_t line, SLCONFIG_STRING expected, SLCONFIG_STRING after, SLCONFIG_STRING actual)
 {
-	_slc_print_error_prefix(state->filename, line, state->vtable);
+	_slc_print_error_prefix(config, state->filename, line, state->vtable);
 	state->vtable->stderr(slc_from_c_str("Error: Expected "));
 	state->vtable->stderr(expected);
 	state->vtable->stderr(slc_from_c_str(" after '"));
@@ -55,9 +73,9 @@ void _slc_expected_after_error(TOKENIZER_STATE* state, size_t line, SLCONFIG_STR
 /*
  * Error: Expected '<expected>' not '<actual>'
  */
-void _slc_expected_error(TOKENIZER_STATE* state, size_t line, SLCONFIG_STRING expected, SLCONFIG_STRING actual)
+void _slc_expected_error(SLCONFIG* config, TOKENIZER_STATE* state, size_t line, SLCONFIG_STRING expected, SLCONFIG_STRING actual)
 {
-	_slc_print_error_prefix(state->filename, line, state->vtable);
+	_slc_print_error_prefix(config, state->filename, line, state->vtable);
 	state->vtable->stderr(slc_from_c_str("Error: Expected '"));
 	state->vtable->stderr(expected);
 	state->vtable->stderr(slc_from_c_str("', not '"));

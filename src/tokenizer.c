@@ -98,7 +98,7 @@ bool token_string(SLCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 			{
 				if(is_naked_string_character(*str->start))
 				{
-					_slc_print_error_prefix(state->filename, state->line, state->vtable);
+					_slc_print_error_prefix(state->config, state->filename, state->line, state->vtable);
 					state->vtable->stderr(slc_from_c_str("Error: Unexpected character '"));
 					SLCONFIG_STRING c = {str->start, str->start + 1};
 					state->vtable->stderr(c);
@@ -137,7 +137,7 @@ bool token_string(SLCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 			str->start++;
 	}
 	
-	_slc_print_error_prefix(state->filename, start_line, state->vtable);
+	_slc_print_error_prefix(state->config, state->filename, start_line, state->vtable);
 	state->vtable->stderr(slc_from_c_str("Error: Unterminated string.\n"));
 	token->type = TOKEN_ERROR;
 	return true;
@@ -231,7 +231,7 @@ bool token_block_comment(SLCONFIG_STRING* str, TOKEN* token, TOKENIZER_STATE* st
 					str->start++;
 			}
 
-			_slc_print_error_prefix(state->filename, start_line, state->vtable);
+			_slc_print_error_prefix(state->config, state->filename, start_line, state->vtable);
 			state->vtable->stderr(slc_from_c_str("Error: Unterminated block comment.\n"));
 			token->type = TOKEN_ERROR;
 			return true;

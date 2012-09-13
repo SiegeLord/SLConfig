@@ -102,7 +102,7 @@ bool parse_node_ref_name(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_ST
 			ret = slc_get_node(aggregate, name);
 		if(!ret)
 		{
-			_slc_print_error_prefix(state->filename, name_line, state->vtable);
+			_slc_print_error_prefix(config, state->filename, name_line, state->vtable);
 			state->vtable->stderr(slc_from_c_str("Error: '"));
 			SLCONFIG_STRING full_name = slc_get_full_name(aggregate);
 			state->vtable->stderr(full_name);
@@ -117,7 +117,7 @@ bool parse_node_ref_name(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_ST
 		{
 			if(!ret->is_aggregate)
 			{
-				_slc_print_error_prefix(state->filename, name_line, state->vtable);
+				_slc_print_error_prefix(config, state->filename, name_line, state->vtable);
 				state->vtable->stderr(slc_from_c_str("Error: '"));
 				SLCONFIG_STRING full_name = slc_get_full_name(ret);
 				state->vtable->stderr(full_name);
@@ -132,7 +132,7 @@ bool parse_node_ref_name(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_ST
 				return false;
 			if(state->cur_token.type != TOKEN_STRING)
 			{
-				_slc_expected_after_error(state->state, state->line, slc_from_c_str("a string"), slc_from_c_str(":"), state->cur_token.str);
+				_slc_expected_after_error(config, state->state, state->line, slc_from_c_str("a string"), slc_from_c_str(":"), state->cur_token.str);
 				return false;
 			}
 			name = state->cur_token.str;
@@ -168,7 +168,7 @@ bool parse_node_ref(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_NODE** 
 		}
 		else
 		{
-			_slc_expected_after_error(state->state, state->line, slc_from_c_str("a string"), slc_from_c_str(":"), state->cur_token.str);
+			_slc_expected_after_error(config, state->state, state->line, slc_from_c_str("a string"), slc_from_c_str(":"), state->cur_token.str);
 			return false;
 		}
 	}
@@ -207,7 +207,7 @@ bool parse_right_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_
 		
 		if(state->cur_token.type != TOKEN_STRING && state->cur_token.type != TOKEN_COLON)
 		{
-			_slc_expected_after_error(state->state, state->line, slc_from_c_str("a string or ':'"), slc_from_c_str("$"), state->cur_token.str);
+			_slc_expected_after_error(config, state->state, state->line, slc_from_c_str("a string or ':'"), slc_from_c_str("$"), state->cur_token.str);
 			return false;
 		}
 		
@@ -217,7 +217,7 @@ bool parse_right_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_
 		
 		if(ref_node->is_aggregate)
 		{
-			_slc_print_error_prefix(state->filename, state->line, state->vtable);
+			_slc_print_error_prefix(config, state->filename, state->line, state->vtable);
 			state->vtable->stderr(slc_from_c_str("Error: Trying to extract a string from '"));
 			SLCONFIG_STRING full_name = slc_get_full_name(ref_node);
 			state->vtable->stderr(full_name);
@@ -231,7 +231,7 @@ bool parse_right_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_
 	}
 	else
 	{
-		_slc_expected_after_error(state->state, state->line, slc_from_c_str("a string"), slc_from_c_str("="), state->cur_token.str);
+		_slc_expected_after_error(config, state->state, state->line, slc_from_c_str("a string"), slc_from_c_str("="), state->cur_token.str);
 		return false;
 	}
 
@@ -272,7 +272,7 @@ bool parse_left_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_N
 			if(!child)
 			{
 				child = slc_get_node(aggregate, name);
-				_slc_print_error_prefix(state->filename, name_line, state->vtable);
+				_slc_print_error_prefix(config, state->filename, name_line, state->vtable);
 				state->vtable->stderr(slc_from_c_str("Error: Cannot change the type of '"));
 				SLCONFIG_STRING full_name = slc_get_full_name(child);
 				state->vtable->stderr(full_name);
@@ -348,7 +348,7 @@ bool parse_left_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_N
 		}
 		else
 		{
-			_slc_expected_after_error(state->state, state->line, slc_from_c_str("a string"), slc_from_c_str(":"), state->cur_token.str);
+			_slc_expected_after_error(config, state->state, state->line, slc_from_c_str("a string"), slc_from_c_str(":"), state->cur_token.str);
 			return false;
 		}
 	}
@@ -381,7 +381,7 @@ bool parse_assign_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_
 			{
 				if(lhs->is_aggregate)
 				{
-					_slc_print_error_prefix(state->filename, state->line, state->vtable);
+					_slc_print_error_prefix(config, state->filename, state->line, state->vtable);
 					state->vtable->stderr(slc_from_c_str("Error: Trying to assign a string to '"));
 					SLCONFIG_STRING full_name = slc_get_full_name(lhs);
 					state->vtable->stderr(full_name);
@@ -411,7 +411,7 @@ bool parse_assign_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_
 			{
 				if(!lhs->is_aggregate)
 				{
-					_slc_print_error_prefix(state->filename, state->line, state->vtable);
+					_slc_print_error_prefix(config, state->filename, state->line, state->vtable);
 					state->vtable->stderr(slc_from_c_str("Error: Trying to assign an aggregate to '"));
 					SLCONFIG_STRING full_name = slc_get_full_name(lhs);
 					state->vtable->stderr(full_name);
@@ -453,7 +453,7 @@ bool parse_assign_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_
 			}
 			else
 			{
-				_slc_expected_error(state->state, state->line, slc_from_c_str(lhs->is_aggregate ? "{" : "="), state->cur_token.str);
+				_slc_expected_error(config, state->state, state->line, slc_from_c_str(lhs->is_aggregate ? "{" : "="), state->cur_token.str);
 				goto error;
 			}
 		}
@@ -467,7 +467,7 @@ bool parse_assign_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_
 			}
 			else
 			{
-				_slc_expected_error(state->state, state->line, slc_from_c_str(";"), state->cur_token.str);
+				_slc_expected_error(config, state->state, state->line, slc_from_c_str(";"), state->cur_token.str);
 				goto error;
 			}
 		}
@@ -498,7 +498,7 @@ bool parse_remove(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* stat
 		
 		if(state->cur_token.type != TOKEN_SEMICOLON)
 		{
-			_slc_expected_error(state->state, state->line, slc_from_c_str(";"), state->cur_token.str);
+			_slc_expected_error(config, state->state, state->line, slc_from_c_str(";"), state->cur_token.str);
 			return false;
 		}
 	}
@@ -520,7 +520,7 @@ bool parse_expand_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_S
 		
 		if(!ref_node->is_aggregate)
 		{
-			_slc_print_error_prefix(state->filename, state->line, state->vtable);
+			_slc_print_error_prefix(config, state->filename, state->line, state->vtable);
 			state->vtable->stderr(slc_from_c_str("Error: Trying to expand '"));
 			SLCONFIG_STRING full_name = slc_get_full_name(ref_node);
 			state->vtable->stderr(full_name);
@@ -540,7 +540,7 @@ bool parse_expand_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_S
 				SLCONFIG_NODE* old_node = slc_get_node(aggregate, child->name);
 				SLCONFIG_STRING full_name;
 				
-				_slc_print_error_prefix(state->filename, state->line, state->vtable);
+				_slc_print_error_prefix(config, state->filename, state->line, state->vtable);
 				state->vtable->stderr(slc_from_c_str("Error: Cannot expand '"));
 				
 				full_name = slc_get_full_name(ref_node);
@@ -587,7 +587,7 @@ bool parse_expand_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_S
 		
 		if(state->cur_token.type != TOKEN_SEMICOLON)
 		{
-			_slc_expected_error(state->state, state->line, slc_from_c_str(";"), state->cur_token.str);
+			_slc_expected_error(config, state->state, state->line, slc_from_c_str(";"), state->cur_token.str);
 			return false;
 		}
 	}
@@ -604,12 +604,12 @@ bool parse_include_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER
 			return false;
 		if(state->cur_token.type != TOKEN_STRING)
 		{
-			_slc_expected_after_error(state->state, state->line, slc_from_c_str("include"), slc_from_c_str("#"), state->cur_token.str);
+			_slc_expected_after_error(config, state->state, state->line, slc_from_c_str("include"), slc_from_c_str("#"), state->cur_token.str);
 			return false;
 		}
 		if(!slc_string_equal(state->cur_token.str, slc_from_c_str("include")))
 		{
-			_slc_expected_after_error(state->state, state->line, slc_from_c_str("include"), slc_from_c_str("#"), state->cur_token.str);
+			_slc_expected_after_error(config, state->state, state->line, slc_from_c_str("include"), slc_from_c_str("#"), state->cur_token.str);
 			return false;
 		}
 		
@@ -618,15 +618,15 @@ bool parse_include_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER
 		
 		if(state->cur_token.type != TOKEN_STRING)
 		{
-			_slc_expected_after_error(state->state, state->line, slc_from_c_str("a string"), slc_from_c_str("#"), state->cur_token.str);
+			_slc_expected_after_error(config, state->state, state->line, slc_from_c_str("a string"), slc_from_c_str("#"), state->cur_token.str);
 			return false;
 		}
 		
 		SLCONFIG_STRING filename = state->cur_token.str;
 		
-		if(!_slc_add_include(config, filename, false))
+		if(!_slc_add_include(config, filename, false, state->line))
 		{
-			_slc_print_error_prefix(state->filename, state->line, state->vtable);
+			_slc_print_error_prefix(config, state->filename, state->line, state->vtable);
 			state->vtable->stderr(slc_from_c_str("Error: Circular include.\n"));
 			return false;
 		}
@@ -634,7 +634,7 @@ bool parse_include_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER
 		SLCONFIG_STRING file = {0, 0};
 		if(!_slc_load_file(config, filename, &file))
 		{
-			_slc_print_error_prefix(state->filename, state->line, state->vtable);
+			_slc_print_error_prefix(config, state->filename, state->line, state->vtable);
 			state->vtable->stderr(slc_from_c_str("Error: File '"));
 			state->vtable->stderr(filename);
 			state->vtable->stderr(slc_from_c_str("' does not exist.\n"));
@@ -651,7 +651,7 @@ bool parse_include_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER
 		
 		if(state->cur_token.type != TOKEN_SEMICOLON)
 		{
-			_slc_expected_error(state->state, state->line, slc_from_c_str(";"), state->cur_token.str);
+			_slc_expected_error(config, state->state, state->line, slc_from_c_str(";"), state->cur_token.str);
 			return false;
 		}
 	}
@@ -693,13 +693,13 @@ bool parse_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* s
 		{
 			if(tok.type == TOKEN_RIGHT_BRACE)
 			{
-				_slc_print_error_prefix(state->filename, state->line, state->vtable);
+				_slc_print_error_prefix(config, state->filename, state->line, state->vtable);
 				state->vtable->stderr(slc_from_c_str("Error: Unpaired '}'.\n"));
 				return false;
 			}
 			else if(tok.type == TOKEN_EOF)
 			{
-				_slc_print_error_prefix(state->filename, start_line, state->vtable);
+				_slc_print_error_prefix(config, state->filename, start_line, state->vtable);
 				state->vtable->stderr(slc_from_c_str("Error: Unpaired '{'.\n"));
 				return false;
 			}
@@ -722,6 +722,7 @@ bool _slc_parse_file(SLCONFIG* config, SLCONFIG_NODE* root, SLCONFIG_STRING file
 	state.line = 1;
 	state.vtable = &config->vtable;
 	state.str = file;
+	state.config = config;
 	
 	PARSER_STATE parser_state;
 	memset(&parser_state, 0, sizeof(PARSER_STATE));
