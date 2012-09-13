@@ -13,6 +13,9 @@ EXAMPLE_OBJS = $(patsubst examples/%.c, .objs/%.o, $(EXAMPLE_SOURCES))
 EXAMPLE_FILES = $(patsubst examples/%.c, bin/%$(EXE), $(EXAMPLE_SOURCES))
 EXAMPLE_LDFLAGS = -Llib -l$(LIB_NAME)
 
+DOC_SOURCE = README.md
+DOC_FILE = doc/doc.html
+
 .PHONY : all
 .PHONY : library
 .PHONY : examples
@@ -22,6 +25,7 @@ EXAMPLE_LDFLAGS = -Llib -l$(LIB_NAME)
 all : library examples
 library : $(LIB_FILE)
 examples : $(EXAMPLE_FILES)
+documentation : $(DOC_FILE)
 
 .objs : 
 	$(MKDIR) .objs
@@ -31,6 +35,12 @@ bin :
 
 lib :
 	$(MKDIR) lib
+
+doc :
+	$(MKDIR) doc
+
+$(DOC_FILE) : doc $(DOC_SOURCE)
+	pandoc -o $(DOC_FILE) $(DOC_SOURCE)
 
 $(LIB_FILE) : lib $(LIB_OBJS)
 	ar rs $(LIB_FILE) $(LIB_OBJS)
@@ -45,9 +55,11 @@ bin/% : .objs/%.o bin library
 	$(CC) -c $< $(C_FLAGS) -o $@
 
 clean : 
+	$(RM) $(DOC_FILE)
 	$(RM) $(LIB_FILE)
 	$(RM) $(EXAMPLE_FILES)
 	$(RM) $(LIB_OBJS) $(EXAMPLE_OBJS)
 	$(RMDIR) .objs
 	$(RMDIR) bin
 	$(RMDIR) lib
+	$(RMDIR) doc
