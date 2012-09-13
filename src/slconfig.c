@@ -155,6 +155,8 @@ void slc_destroy_config(SLCONFIG* config)
 		return;
 	
 	slc_destroy_node(config->root);
+	/* Free it explicitly, as slc_destroy_node doesn't do that to root */
+	_slc_free(config, config->root);
 	
 	for(size_t ii = 0; ii < config->num_files; ii++)
 		slc_destroy_string(&config->files[ii], config->vtable.realloc);
@@ -220,10 +222,16 @@ void _slc_destroy_node(SLCONFIG_NODE* node, bool detach)
 	if(node->children)
 		_slc_free(node->config, node->children);
 	
-	if(detach)
-		detach_node(node);
+	/* Don't free the root */
+	if(node->parent)
+	{
+		if(detach)
+			detach_node(node);
+		
+		_slc_free(node->config, node);
+	}
 	
-	_slc_free(node->config, node);
+	/* TODO: Make the destroyed node (in case of root) still usable after destruction */
 }
 
 void slc_destroy_node(SLCONFIG_NODE* node)
