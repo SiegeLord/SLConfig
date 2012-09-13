@@ -282,6 +282,8 @@ TOKEN _slc_get_next_token(TOKENIZER_STATE* state)
 		goto exit;
 	if(token_character(&state->str, &ret, '~', TOKEN_TILDE))
 		goto exit;
+	if(token_character(&state->str, &ret, '#', TOKEN_HASH))
+		goto exit;
 	if(token_line_comment(&state->str, &ret))
 		goto exit;
 	if(token_block_comment(&state->str, &ret, state))

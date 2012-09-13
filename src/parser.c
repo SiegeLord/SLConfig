@@ -594,6 +594,70 @@ bool parse_expand_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_S
 	return true;
 }
 
+/* Parse an include statement */
+static
+bool parse_include_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
+{
+	if(state->cur_token.type == TOKEN_HASH)
+	{
+		if(!advance(state))
+			return false;
+		if(state->cur_token.type != TOKEN_STRING)
+		{
+			_slc_expected_after_error(state->state, state->line, slc_from_c_str("include"), slc_from_c_str("#"), state->cur_token.str);
+			return false;
+		}
+		if(!slc_string_equal(state->cur_token.str, slc_from_c_str("include")))
+		{
+			_slc_expected_after_error(state->state, state->line, slc_from_c_str("include"), slc_from_c_str("#"), state->cur_token.str);
+			return false;
+		}
+		
+		if(!advance(state))
+			return false;
+		
+		if(state->cur_token.type != TOKEN_STRING)
+		{
+			_slc_expected_after_error(state->state, state->line, slc_from_c_str("a string"), slc_from_c_str("#"), state->cur_token.str);
+			return false;
+		}
+		
+		SLCONFIG_STRING filename = state->cur_token.str;
+		
+		if(!_slc_add_include(config, filename, false))
+		{
+			_slc_print_error_prefix(state->filename, state->line, state->vtable);
+			state->vtable->stderr(slc_from_c_str("Error: Circular include.\n"));
+			return false;
+		}
+		
+		SLCONFIG_STRING file = {0, 0};
+		if(!_slc_load_file(config, filename, &file))
+		{
+			_slc_print_error_prefix(state->filename, state->line, state->vtable);
+			state->vtable->stderr(slc_from_c_str("Error: File '"));
+			state->vtable->stderr(filename);
+			state->vtable->stderr(slc_from_c_str("' does not exist.\n"));
+			return false;
+		}
+		
+		if(!_slc_parse_file(config, aggregate, filename, file))
+			return false;
+		
+		_slc_pop_include(config);
+		
+		if(!advance(state))
+			return false;
+		
+		if(state->cur_token.type != TOKEN_SEMICOLON)
+		{
+			_slc_expected_error(state->state, state->line, slc_from_c_str(";"), state->cur_token.str);
+			return false;
+		}
+	}
+	return true;
+}
+
 /* Chomp up the statements in the root, or between braces in an aggregate. The braces are taken care of by this function */
 static
 bool parse_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
@@ -608,6 +672,8 @@ bool parse_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* s
 	}
 	do
 	{
+		if(!parse_include_expression(config, aggregate, state))
+			return false;
 		if(!parse_assign_expression(config, aggregate, state))
 			return false;
 		if(!parse_remove(config, aggregate, state))
@@ -650,7 +716,7 @@ bool parse_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* s
 }
 
 bool _slc_parse_file(SLCONFIG* config, SLCONFIG_NODE* root, SLCONFIG_STRING filename, SLCONFIG_STRING file)
-{
+{	
 	TOKENIZER_STATE state;
 	state.filename = filename;
 	state.line = 1;

@@ -85,16 +85,17 @@ SLCONFIG* slc_create_config(const SLCONFIG_VTABLE* vtable_ptr)
 	return ret;
 }
 
-bool slc_load_config(SLCONFIG* config, SLCONFIG_STRING filename)
+bool _slc_load_file(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING* file)
 {
 	assert(config);
-	SLCONFIG_STRING file;
-
-#define BUF_SIZE (1024)
+	
+	#define BUF_SIZE (1024)
 	size_t total_bytes_read = 0;
 	size_t bytes_read;
 	char* buff = 0;
 	void* f = config->vtable.fopen(filename, slc_from_c_str("rb"));
+	if(!f)
+		return false;
 	
 	do
 	{
@@ -105,12 +106,22 @@ bool slc_load_config(SLCONFIG* config, SLCONFIG_STRING filename)
 	
 	config->vtable.fclose(f);
 	
-	file.start = buff;
-	file.end = buff + total_bytes_read;
+	file->start = buff;
+	file->end = buff + total_bytes_read;
 	
-	bool ret = slc_load_config_string(config, filename, file, false);
+	_slc_add_file(config, *file);
+	return true;
+}
+
+bool slc_load_config(SLCONFIG* config, SLCONFIG_STRING filename)
+{
+	assert(config);
+	_slc_add_include(config, filename, false);
+	SLCONFIG_STRING file = {0, 0};
+	bool ret = _slc_load_file(config, filename, &file);
 	if(ret)
-		_slc_add_file(config, file);
+		ret = _slc_parse_file(config, config->root, filename, file);
+	_slc_clear_includes(config);
 	return ret;
 }
 
@@ -128,7 +139,10 @@ bool slc_load_config_string(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG
 		new_file = file;
 	}
 	
-	return _slc_parse_file(config, config->root, filename, new_file);
+	_slc_add_include(config, filename, false);
+	bool ret = _slc_parse_file(config, config->root, filename, new_file);
+	_slc_clear_includes(config);
+	return ret;
 }
 
 void slc_destroy_config(SLCONFIG* config)
@@ -428,4 +442,51 @@ void _slc_copy_into(SLCONFIG_NODE* dest, SLCONFIG_NODE* src)
 			_slc_copy_into(new_node, child);
 		}
 	}
+}
+
+bool _slc_add_include(SLCONFIG* config, SLCONFIG_STRING filename, bool own)
+{
+	assert(config);
+	
+	for(size_t ii = 0; ii < config->num_includes; ii++)
+	{
+		if(slc_string_equal(config->include_list[ii], filename))
+			return false;
+	}
+	
+	config->include_list = config->vtable.realloc(config->include_list, sizeof(SLCONFIG_STRING) * (config->num_includes + 1));
+	config->include_ownerships = config->vtable.realloc(config->include_ownerships, sizeof(bool) * (config->num_includes + 1));
+	config->include_list[config->num_includes] = filename;
+	config->include_ownerships[config->num_includes] = own;
+	config->num_includes++;
+	return true;
+}
+
+void _slc_pop_include(SLCONFIG* config)
+{
+	assert(config);
+	assert(config->num_includes > 0);
+	if(config->num_includes > 0)
+		config->num_includes--;
+}
+
+void _slc_clear_includes(SLCONFIG* config)
+{
+	assert(config);
+	
+	for(size_t ii = 0; ii < config->num_includes; ii++)
+	{
+		if(config->include_ownerships[ii])
+			slc_destroy_string(&config->include_list[ii], config->vtable.realloc);
+	}
+	
+	if(config->include_list)
+	{
+		config->vtable.realloc(config->include_list, 0);
+		config->vtable.realloc(config->include_ownerships, 0);
+	}
+	
+	config->include_list = 0;
+	config->include_ownerships = 0;
+	config->num_includes = 0;
 }

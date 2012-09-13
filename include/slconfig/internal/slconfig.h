@@ -11,6 +11,11 @@ struct SLCONFIG
 	SLCONFIG_NODE* root;
 	
 	SLCONFIG_VTABLE vtable;
+	
+	/* Include business */
+	SLCONFIG_STRING* include_list;
+	bool* include_ownerships;
+	size_t num_includes;
 };
 
 struct SLCONFIG_NODE
@@ -40,5 +45,10 @@ void _slc_copy_into(SLCONFIG_NODE* dest, SLCONFIG_NODE* src);
 void _slc_destroy_node(SLCONFIG_NODE* node, bool detach);
 void _slc_free(SLCONFIG* config, void*);
 void _slc_add_file(SLCONFIG* config, SLCONFIG_STRING new_file);
+bool _slc_load_file(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING* file);
+
+bool _slc_add_include(SLCONFIG* config, SLCONFIG_STRING filename, bool own);
+void _slc_pop_include(SLCONFIG* config);
+void _slc_clear_includes(SLCONFIG* config);
 
 #endif
