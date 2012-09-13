@@ -81,6 +81,10 @@ SLCONFIG* slc_create_config(const SLCONFIG_VTABLE* vtable_ptr)
 	memset(ret->root, 0, sizeof(SLCONFIG_NODE));
 	ret->root->is_aggregate = true;
 	ret->root->config = ret;
+	ret->num_includes = 0;
+	ret->include_list = 0;
+	ret->include_lines = 0;
+	ret->include_ownerships = 0;
 	
 	return ret;
 }
