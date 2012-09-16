@@ -56,6 +56,8 @@ Table of Contents
 Building
 --------
 
+Run `make` to build the library and examples.
+
 Format Definition
 -----------------
 
