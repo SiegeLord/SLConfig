@@ -18,7 +18,8 @@ bool is_naked_string_character(char c)
 {
 	return !is_whitespace(c) && !is_newline(c) &&
 	       c != ':' && c != '$' && c != '{' && c != '~' &&
-	       c != '}' && c != ';' && c != '=' && c != '"';
+	       c != '}' && c != ';' && c != '=' && c != '"' &&
+	       c != '#';
 }
 
 static
