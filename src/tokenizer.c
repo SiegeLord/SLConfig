@@ -1,4 +1,5 @@
-/*
+/* Copyright 2012 Pavel Sountsov
+ * 
  * This file is part of SLConfig.
  *
  * SLConfig is free software: you can redistribute it and/or modify

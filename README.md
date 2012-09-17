@@ -67,6 +67,4 @@ User API
 License
 -------
 
-LGPL 3.0
-
-See LICENSE for the license text.
+The library is licensed under LGPL 3.0 (see LICENSE). The examples are licensed under the Zlib license.
