@@ -66,3 +66,7 @@ User API
 
 License
 -------
+
+LGPL 3.0
+
+See LICENSE for the license text.
