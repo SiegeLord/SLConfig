@@ -174,7 +174,7 @@ bool parse_node_ref(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_NODE** 
 {
 	SLCONFIG_STRING name;
 	size_t name_line;
-	if(state->cur_token.type == TOKEN_COLON)
+	if(state->cur_token.type == TOKEN_DOUBLE_COLON)
 	{
 		aggregate = config->root;
 		if(!advance(state))
@@ -197,7 +197,8 @@ bool parse_node_ref(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_NODE** 
 	}
 	else
 	{
-		return true;
+		assert(0);
+		return false;
 	}
 	
 	if(!advance(state))
@@ -223,9 +224,9 @@ bool parse_right_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_
 		if(!advance(state))
 			return false;
 		
-		if(state->cur_token.type != TOKEN_STRING && state->cur_token.type != TOKEN_COLON)
+		if(state->cur_token.type != TOKEN_STRING && state->cur_token.type != TOKEN_DOUBLE_COLON)
 		{
-			_slc_expected_after_error(config, state->state, state->line, slc_from_c_str("a string or ':'"), slc_from_c_str("$"), state->cur_token.str);
+			_slc_expected_after_error(config, state->state, state->line, slc_from_c_str("a string or '::'"), slc_from_c_str("$"), state->cur_token.str);
 			return false;
 		}
 		
@@ -352,7 +353,7 @@ bool parse_left_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_N
 			return true;
 		}
 	}
-	else if(state->cur_token.type == TOKEN_COLON)
+	else if(state->cur_token.type == TOKEN_DOUBLE_COLON)
 	{
 		aggregate = config->root;
 		if(!advance(state))

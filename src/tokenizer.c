@@ -175,6 +175,29 @@ exit:
 }
 
 static
+bool token_double_colon(SLCONFIG_STRING* str, TOKEN* token)
+{
+	if(str->start < str->end && *str->start == ':')
+	{
+		str->start++;
+		if(str->start < str->end && *str->start == ':')
+		{
+			str->start++;
+			token->str.start = str->start;
+			token->type = TOKEN_DOUBLE_COLON;
+			token->str.end = str->start;
+			
+			return true;
+		}
+		else
+		{
+			str->start--;
+		}
+	}
+	return false;
+}
+
+static
 bool token_line_comment(SLCONFIG_STRING* str, TOKEN* token)
 {
 	if(str->start < str->end && *str->start == '/')
@@ -287,6 +310,8 @@ TOKEN _slc_get_next_token(TOKENIZER_STATE* state)
 		ret.str = slc_from_c_str("<EOF>");
 		goto exit;
 	}
+	if(token_double_colon(&state->str, &ret))
+		goto exit;
 	if(token_character(&state->str, &ret, '$', TOKEN_DOLLAR))
 		goto exit;
 	if(token_character(&state->str, &ret, ';', TOKEN_SEMICOLON))
