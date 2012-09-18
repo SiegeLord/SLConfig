@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct
 {
@@ -42,6 +43,7 @@ SLCONFIG_NODE* slc_add_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type, bool
 SLCONFIG_NODE* slc_get_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING name);
 
 bool slc_set_value(SLCONFIG_NODE* node, SLCONFIG_STRING value, bool copy);
+void slc_set_user_data(SLCONFIG_NODE* node, intptr_t data, void (*user_destructor)(intptr_t));
 size_t slc_get_num_children(SLCONFIG_NODE* node);
 SLCONFIG_NODE** slc_get_children(SLCONFIG_NODE* node);
 SLCONFIG_STRING slc_get_name(SLCONFIG_NODE* node);

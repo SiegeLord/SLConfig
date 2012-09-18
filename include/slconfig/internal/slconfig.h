@@ -33,7 +33,9 @@ struct SLCONFIG_NODE
 	SLCONFIG_NODE** children;
 	size_t num_children;
 	
-	void* user_data;
+	intptr_t user_data;
+	void (*user_destructor)(intptr_t);
+	
 	SLCONFIG_NODE* parent;
 	bool is_aggregate;
 	SLCONFIG* config;

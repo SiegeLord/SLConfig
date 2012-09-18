@@ -477,6 +477,8 @@ bool parse_assign_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_
 				temp_node.own_name = lhs->own_name;
 				temp_node.comment = lhs->comment;
 				temp_node.own_comment = lhs->own_comment;
+				temp_node.user_data = lhs->user_data;
+				temp_node.user_destructor = lhs->user_destructor;
 				
 				if(!parse_aggregate(config, &temp_node, state))
 					goto error;

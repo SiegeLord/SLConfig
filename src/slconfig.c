@@ -240,6 +240,9 @@ void _slc_destroy_node(SLCONFIG_NODE* node, bool detach)
 	if(node->children)
 		_slc_free(node->config, node->children);
 	
+	if(node->user_destructor)
+		node->user_destructor(node->user_data);
+	
 	/* Don't free the root */
 	if(node->parent)
 	{
@@ -527,4 +530,14 @@ void _slc_clear_includes(SLCONFIG* config)
 	config->include_ownerships = 0;
 	config->include_lines = 0;
 	config->num_includes = 0;
+}
+
+void slc_set_user_data(SLCONFIG_NODE* node, intptr_t data, void (*user_destructor)(intptr_t))
+{
+	assert(node);
+	if(node->user_destructor)
+		node->user_destructor(node->user_data);
+	
+	node->user_data = data;
+	node->user_destructor = user_destructor;
 }
