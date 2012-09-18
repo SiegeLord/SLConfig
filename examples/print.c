@@ -35,7 +35,8 @@ void print_delegate(SLCONFIG_NODE* node, int level)
 		SLCONFIG_STRING type = slc_get_type(child);
 		SLCONFIG_STRING comment = slc_get_comment(child);
 		
-		printf("%s/*\n%s%.*s\n%s*/\n", indent, indent, (int)slc_string_length(comment), comment.start, indent);
+		if(slc_string_length(comment))
+			printf("%s/*\n%s%.*s\n%s*/\n", indent, indent, (int)slc_string_length(comment), comment.start, indent);
 		
 		SLCONFIG_STRING full_name = slc_get_full_name(child);
 		printf("%s(%.*s) %.*s", indent, (int)slc_string_length(type), type.start,
@@ -59,16 +60,20 @@ void print_delegate(SLCONFIG_NODE* node, int level)
 	free(indent);
 }
 
-int main()
+int main(int argc, char** argv)
 {
+	if(argc < 2)
+	{
+		printf("Usage:\n%s file\n", argv[0]);
+		return -1;
+	}
 	SLCONFIG* config = slc_create_config(0);
 	SLCONFIG_NODE* root = slc_get_root(config);
 	
 	SLCONFIG_NODE* node = slc_add_node(root, slc_from_c_str(""), false, slc_from_c_str("external"), false, false);
 	slc_set_value(node, slc_from_c_str("external_value"), false);
-	if(slc_load_config(config, slc_from_c_str("test.cfg")))
+	if(slc_load_config(config, slc_from_c_str(argv[1])))
 	{
-		printf("Done!\n\n");
 		print_delegate(root, 0);
 	}
 	slc_destroy_config(config);
