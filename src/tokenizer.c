@@ -105,6 +105,7 @@ bool token_string(SLCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 	bool first_quote = false;
 	bool second_quote = false;
 	size_t start_line = state->line;
+	bool escape = false;
 	
 	pre_quote.start = str->start;
 	while(str->start < str->end)
@@ -115,7 +116,7 @@ bool token_string(SLCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 			
 			if(slc_string_equal(pre_quote, post_quote))
 			{
-				if(is_naked_string_character(*str->start))
+				/*if(is_naked_string_character(*str->start))
 				{
 					_slc_print_error_prefix(state->config, state->filename, state->line, state->vtable);
 					state->vtable->stderr(slc_from_c_str("Error: Unexpected character '"));
@@ -127,7 +128,7 @@ bool token_string(SLCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 					else
 						state->vtable->stderr(slc_from_c_str("' after final heredoc string sentinel.\n"));
 					token->type = TOKEN_ERROR;
-				}
+				}*/
 				goto exit;
 			}
 		}
@@ -139,7 +140,7 @@ bool token_string(SLCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 				pre_quote.end = str->start;
 				first_quote = true;
 			}
-			else
+			else if(slc_string_length(pre_quote) != 0 || !escape)
 			{
 				post_quote.start = str->start + 1;
 				second_quote = true;
@@ -151,6 +152,8 @@ bool token_string(SLCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 			pre_quote.end = str->start;
 			goto exit;
 		}
+		
+		escape = !escape && *str->start == '\\'; 
 		
 		if(!eat_newline(str, &state->line))
 			str->start++;
