@@ -19,6 +19,9 @@
 #include "slconfig/internal/tokenizer.h"
 #include "slconfig/internal/utils.h"
 
+#include <string.h>
+#include <assert.h>
+
 static
 bool is_whitespace(char c)
 {
@@ -98,6 +101,80 @@ bool token_character(SLCONFIG_STRING *str, TOKEN* token, char c, TOKEN_TYPE type
 }
 
 static
+bool escape_string(SLCONFIG_STRING *str, SLCONFIG_VTABLE* vtable)
+{
+	SLCONFIG_STRING source = *str;
+	SLCONFIG_STRING source_iter = source;
+	bool new_allocation = false;
+	size_t offset = 0;
+	
+	while(source_iter.start < source_iter.end)
+	{
+		if(*source_iter.start == '\\')
+		{
+			if(!new_allocation)
+			{
+				str->start = vtable->realloc(0, slc_string_length(source));
+				str->end = str->start;
+				new_allocation = true;
+			}
+			
+			size_t ammt = source_iter.start - source.start - offset;
+			memcpy((char*)str->end, source.start + offset, ammt);
+			str->end += ammt;
+			offset += ammt + 2; //Skip both the '\' and the character after it
+			
+			source_iter.start++;
+			assert(source_iter.start < source_iter.end);
+			
+			switch(*source_iter.start)
+			{
+				case '0':
+					*(char*)str->end = '\0';
+					break;
+				case 'a':
+					*(char*)str->end = '\a';
+					break;
+				case 'b':
+					*(char*)str->end = '\b';
+					break;
+				case 'f':
+					*(char*)str->end = '\f';
+					break;
+				case 'n':
+					*(char*)str->end = LF;
+					break;
+				case 'r':
+					*(char*)str->end = CR;
+					break;
+				case 't':
+					*(char*)str->end = '\t';
+					break;
+				case 'v':
+					*(char*)str->end = '\v';
+					break;
+				default:
+					*(char*)str->end = *source_iter.start;
+					break;
+			}
+			
+			str->end++;
+		}
+		
+		source_iter.start++;
+	}
+	
+	if(new_allocation)
+	{
+		size_t ammt = source_iter.start - source.start - offset;
+		memcpy((char*)str->end, source.start + offset, ammt);
+		str->end += ammt;
+	}
+	
+	return new_allocation;
+}
+
+static
 bool token_string(SLCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 {
 	SLCONFIG_STRING pre_quote;
@@ -166,8 +243,15 @@ bool token_string(SLCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 exit:
 	if(second_quote)
 	{
-		token->str.start = pre_quote.end + 1;
-		token->str.end = post_quote.start - 1;
+		SLCONFIG_STRING string_content;
+		string_content.start = pre_quote.end + 1;
+		string_content.end = post_quote.start - 1;
+		if(!slc_string_length(pre_quote))
+		{
+			token->own = escape_string(&string_content, state->vtable);
+		}
+		
+		token->str = string_content;
 	}
 	else
 	{
