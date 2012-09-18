@@ -64,7 +64,7 @@ int main(int argc, char** argv)
 {
 	if(argc < 2)
 	{
-		printf("Usage:\n%s file\n", argv[0]);
+		fprintf(stderr, "Usage:\n%s file\n", argv[0]);
 		return -1;
 	}
 	SLCONFIG* config = slc_create_config(0);
@@ -73,9 +73,9 @@ int main(int argc, char** argv)
 	SLCONFIG_NODE* node = slc_add_node(root, slc_from_c_str(""), false, slc_from_c_str("external"), false, false);
 	slc_set_value(node, slc_from_c_str("external_value"), false);
 	if(slc_load_config(config, slc_from_c_str(argv[1])))
-	{
 		print_delegate(root, 0);
-	}
+	else
+		fprintf(stderr, "Error loading %s.\n", argv[1]);
 	slc_destroy_config(config);
 	return 0;
 }
