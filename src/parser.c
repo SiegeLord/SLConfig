@@ -38,6 +38,7 @@ typedef struct
 	size_t line;
 	TOKEN cur_token;
 	SLCONFIG_VTABLE* vtable;
+	bool free_token;
 } PARSER_STATE;
 
 static bool parse_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state);
@@ -71,9 +72,13 @@ bool advance(PARSER_STATE* state)
 		
 		token = _slc_get_next_token(state->state);
 	}
+	
+	if(state->free_token)
+		slc_destroy_string(&state->cur_token.str, state->vtable->realloc);
 
 	state->cur_token = token;
 	state->line = state->state->line;
+	state->free_token = token.own;
 
 	if(token.type == TOKEN_ERROR)
 		return false;
@@ -212,10 +217,13 @@ static
 bool parse_right_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_STRING* rhs, PARSER_STATE* state)
 {	
 	SLCONFIG_STRING str;
+	bool own_str = false;
 		
 	if(state->cur_token.type == TOKEN_STRING)
 	{	
 		str = state->cur_token.str;
+		own_str = state->cur_token.own;
+		state->free_token = false;
 		if(!advance(state))
 			return false;
 	}
@@ -256,6 +264,9 @@ bool parse_right_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_
 
 	slc_append_to_string(rhs, str, config->vtable.realloc);
 	
+	if(own_str)
+		slc_destroy_string(&str, config->vtable.realloc);
+	
 	return true;
 }
 
@@ -277,6 +288,8 @@ bool parse_left_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_N
 	if(state->cur_token.type == TOKEN_STRING)
 	{
 		SLCONFIG_STRING type_or_name = state->cur_token.str;
+		bool own_type_or_name = state->cur_token.own;
+		state->free_token = false;
 		name_line = state->line;
 		if(!advance(state))
 			return false;
@@ -284,6 +297,8 @@ bool parse_left_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_N
 		if(state->cur_token.type == TOKEN_STRING)
 		{
 			name = state->cur_token.str;
+			bool own_name = state->cur_token.own;
+			state->free_token = false;
 			if(!advance(state))
 				return false;
 			bool is_aggregate = state->cur_token.type == TOKEN_LEFT_BRACE;
@@ -308,6 +323,10 @@ bool parse_left_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_N
 				state->vtable->stderr(slc_from_c_str(").\n"));
 				return false;
 			}
+			
+			child->own_type = own_type_or_name;
+			child->own_name = own_name;
+			
 			*lhs_node = child;
 			*expect_assign = state->cur_token.type != TOKEN_SEMICOLON;
 			return true;
@@ -330,6 +349,7 @@ bool parse_left_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_N
 			{
 				child = _slc_add_node_no_attach(aggregate, slc_from_c_str(""), false, type_or_name, false, state->cur_token.type == TOKEN_LEFT_BRACE);
 				assert(child);
+				child->own_name = own_type_or_name;
 				*lhs_node = child;
 			}
 			*expect_assign = true;
@@ -348,6 +368,7 @@ bool parse_left_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_N
 			{
 				child = _slc_add_node_no_attach(aggregate, slc_from_c_str(""), false, type_or_name, false, state->cur_token.type == TOKEN_LEFT_BRACE);
 				assert(child);
+				child->own_name = own_type_or_name;
 				*lhs_node = child;
 			}
 			return true;
@@ -749,6 +770,7 @@ bool _slc_parse_file(SLCONFIG* config, SLCONFIG_NODE* root, SLCONFIG_STRING file
 	parser_state.line = 1;
 	parser_state.filename = filename;
 	parser_state.vtable = &config->vtable;
+	parser_state.free_token = false;
 	
 	bool ret;
 	if(advance(&parser_state))
