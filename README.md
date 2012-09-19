@@ -36,7 +36,8 @@ unquoted strings with some restrictions as to their content).
         $Ant;
         
         // String concatenation (description now holds "An ant, ... foe. This one... ")
-        description = $description " This one in particular is yellow.";
+        // Note that single quoted strings support escape sequences ('\"' below)
+        description = $description " This one in particular is \"yellow\".";
         
         // Remove a node
         ~bite_attack;
