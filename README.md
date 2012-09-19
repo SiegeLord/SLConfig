@@ -1,5 +1,4 @@
-SLConfig
-========
+# SLConfig
 
 SLConfig was born out of my need to have a simple configuration file format that
 supported user defined types, had nice syntax and allowed for some manipulation
@@ -46,26 +45,115 @@ unquoted strings with some restrictions as to their content).
     // It is possible to affect nested nodes from outside the nodes they are nested in
     YellowAnt:health = 10;
 
-Table of Contents
------------------
+## Table of Contents
 
 1. [Building](#building)
 2. [Format Definition](#format-definition)
 3. [User API](#user-api)
 4. [License](#license)
 
-Building
---------
+## Building
 
 Run `make` to build the library and examples.
 
-Format Definition
------------------
+## Format Definition
 
-User API
---------
+### File Encoding
 
-License
--------
+SLConfig expects files in the UTF-8 encoding. Both Windows, Linux and 
+OSX style line endings are accepted, but as noted later, they are not 
+converted at all during parsing, which means that the user application
+may need to take them into account.
+
+### Reserved tokens
+
+The following tokens cannot be present in naked strings, or heredoc 
+sentinels.
+
+```
+~
+#
+{
+}
+;
+$
+=
+:
+::
+```
+
+### Comments
+
+Two types of comments are supported. Line comments:
+
+```
+//This is a comment
+```
+
+And block comments:
+
+```
+/*This is a comment*/
+```
+
+Unlike C/C++, block comments nest:
+
+```
+/*
+/*
+This is a comment
+*/
+Still a comment
+*/
+```
+
+Comments whose first character is a `*` are docstrings, and are 
+accessible from the user code. They are bound to the node definition 
+that follows them, or that is on the same line before them. Multiple 
+docstrings are concatenated together with the line feed character. If a 
+docstring does not fit that description, it is ignored.
+
+```
+//*You can read me in the host code
+/**Me too!*/
+node; //*This and the two comments above attach to this node
+//*This comment is lost
+```
+
+### Strings
+
+BNF definition:
+
+```
+{Quoted String Chars} = {All Valid} - ["\]
+{Naked String Chars} = {All Valid} - {Whitespace} - [=#~{}$:;"]
+{Naked String Start} = {Naked String Chars} - [/*]
+
+NakedString = {Naked String Chars}
+            | {Naked String Chars}? {Naked String Start} {Naked String Chars}*
+QuotedString = '"' ( {Quoted String Chars} | '\' {Printable} )* '"'
+```
+
+Aside from the special tokens, whitespace and comments, everything inside a 
+SLConfig file is a string. There are 3 types of strings: naked 
+strings, escaped strings and heredocs.
+
+Naked strings are just sequences of characters (that are not reserved 
+tokens). Here are 5 valid strings:
+
+```
+valid
+!@#%
+1.5e-3
+asd//
+asd/*
+```
+
+Note that the last two seem to contain comment starts, but in fact the 
+parser will absorb those characters.
+
+## User API
+
+## License
 
 The library is licensed under LGPL 3.0 (see LICENSE). The examples are licensed under the Zlib license.
