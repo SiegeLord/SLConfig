@@ -60,22 +60,54 @@ void print_delegate(SLCONFIG_NODE* node, int level)
 	free(indent);
 }
 
+static
+void print_help(const char* argv0)
+{
+	fprintf(stderr, "Usage:\n%s [-I<search_directory>...] <file>\n", argv0);
+}
+
 int main(int argc, char** argv)
 {
 	if(argc < 2)
 	{
-		fprintf(stderr, "Usage:\n%s file\n", argv[0]);
+		print_help(argv[0]);
 		return -1;
 	}
+	int ret = -1;
 	SLCONFIG* config = slc_create_config(0);
+	
+	for(int ii = 1; ii < argc - 1; ii++)
+	{
+		char* arg = argv[ii];
+		if(*arg != '-')
+		{
+			print_help(argv[0]);
+			goto exit;
+		}
+		arg++;
+		if(*arg != 'I')
+		{
+			print_help(argv[0]);
+			goto exit;
+		}
+		arg++;
+		slc_add_search_directory(config, slc_from_c_str(arg), false);
+	}
+	
 	SLCONFIG_NODE* root = slc_get_root(config);
 	
 	SLCONFIG_NODE* node = slc_add_node(root, slc_from_c_str(""), false, slc_from_c_str("external"), false, false);
 	slc_set_value(node, slc_from_c_str("external_value"), false);
-	if(slc_load_config(config, slc_from_c_str(argv[1])))
+	if(slc_load_config(config, slc_from_c_str(argv[argc - 1])))
+	{
 		print_delegate(root, 0);
+		ret = 0;
+	}
 	else
-		fprintf(stderr, "Error loading %s.\n", argv[1]);
+	{
+		fprintf(stderr, "Error loading %s.\n", argv[argc - 1]);
+	}
+exit:
 	slc_destroy_config(config);
-	return 0;
+	return ret;
 }

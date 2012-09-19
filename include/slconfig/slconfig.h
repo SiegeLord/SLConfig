@@ -33,6 +33,9 @@ typedef struct SLCONFIG_NODE SLCONFIG_NODE;
 SLCONFIG* slc_create_config(const SLCONFIG_VTABLE* vtable);
 void slc_destroy_config(SLCONFIG* config);
 
+void slc_add_search_directory(SLCONFIG* config, SLCONFIG_STRING directory, bool copy);
+void slc_clear_search_directories(SLCONFIG* config);
+
 bool slc_load_config(SLCONFIG* config, SLCONFIG_STRING filename);
 bool slc_load_config_string(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy);
 

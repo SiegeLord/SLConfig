@@ -103,6 +103,9 @@ SLCONFIG* slc_create_config(const SLCONFIG_VTABLE* vtable_ptr)
 	ret->include_list = 0;
 	ret->include_lines = 0;
 	ret->include_ownerships = 0;
+	ret->num_search_dirs = 0;
+	ret->search_dirs = 0;
+	ret->search_dir_ownerships = 0;
 	
 	return ret;
 }
@@ -117,7 +120,21 @@ bool _slc_load_file(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING*
 	char* buff = 0;
 	void* f = config->vtable.fopen(filename, slc_from_c_str("rb"));
 	if(!f)
-		return false;
+	{
+		for(size_t ii = 0; ii < config->num_search_dirs && !f; ii++)
+		{
+			SLCONFIG_STRING test_file = {0, 0};
+			slc_append_to_string(&test_file, config->search_dirs[ii], config->vtable.realloc);
+			slc_append_to_string(&test_file, slc_from_c_str("/"), config->vtable.realloc);
+			slc_append_to_string(&test_file, filename, config->vtable.realloc);
+			
+			f = config->vtable.fopen(test_file, slc_from_c_str("rb"));
+			slc_destroy_string(&test_file, config->vtable.realloc);
+		}
+		
+		if(!f)
+			return false;
+	}
 	
 	do
 	{
@@ -180,6 +197,8 @@ void slc_destroy_config(SLCONFIG* config)
 		slc_destroy_string(&config->files[ii], config->vtable.realloc);
 	
 	_slc_free(config, config->files);
+	
+	slc_clear_search_directories(config);
 	
 	_slc_free(config, config);
 }
@@ -540,4 +559,43 @@ void slc_set_user_data(SLCONFIG_NODE* node, intptr_t data, void (*user_destructo
 	
 	node->user_data = data;
 	node->user_destructor = user_destructor;
+}
+
+void slc_add_search_directory(SLCONFIG* config, SLCONFIG_STRING directory, bool copy)
+{
+	assert(config);
+	config->search_dirs = config->vtable.realloc(config->search_dirs, sizeof(SLCONFIG_STRING) * (config->num_search_dirs + 1));
+	config->search_dir_ownerships = config->vtable.realloc(config->search_dir_ownerships, sizeof(bool) * (config->num_search_dirs + 1));
+	
+	SLCONFIG_STRING str = {0, 0};
+	if(copy)
+		slc_append_to_string(&str, directory, config->vtable.realloc);
+	else
+		str = directory;
+
+	config->search_dirs[config->num_search_dirs] = str;
+	config->search_dir_ownerships[config->num_search_dirs] = copy;
+	
+	config->num_search_dirs++;
+}
+
+void slc_clear_search_directories(SLCONFIG* config)
+{
+	assert(config);
+	
+	for(size_t ii = 0; ii < config->num_search_dirs; ii++)
+	{
+		if(config->search_dir_ownerships[ii])
+			slc_destroy_string(&config->search_dirs[ii], config->vtable.realloc);
+	}
+	
+	if(config->search_dirs)
+	{
+		config->vtable.realloc(config->search_dirs, 0);
+		config->vtable.realloc(config->search_dir_ownerships, 0);
+	}
+	
+	config->search_dirs = 0;
+	config->search_dir_ownerships = 0;
+	config->num_search_dirs = 0;
 }

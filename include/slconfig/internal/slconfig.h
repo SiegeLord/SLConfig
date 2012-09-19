@@ -17,6 +17,11 @@ struct SLCONFIG
 	size_t* include_lines;
 	bool* include_ownerships;
 	size_t num_includes;
+	
+	/* Search directory */
+	SLCONFIG_STRING* search_dirs;
+	bool* search_dir_ownerships;
+	size_t num_search_dirs;
 };
 
 struct SLCONFIG_NODE

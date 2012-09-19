@@ -680,6 +680,15 @@ bool parse_include_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER
 			state->vtable->stderr(slc_from_c_str("Error: File '"));
 			state->vtable->stderr(filename);
 			state->vtable->stderr(slc_from_c_str("' does not exist.\n"));
+			if(config->num_search_dirs)
+			{
+				state->vtable->stderr(slc_from_c_str("Search directories:\n"));
+				for(size_t ii = 0; ii < config->num_search_dirs; ii++)
+				{
+					state->vtable->stderr(config->search_dirs[ii]);
+					state->vtable->stderr(slc_from_c_str("\n"));
+				}
+			}
 			return false;
 		}
 		
