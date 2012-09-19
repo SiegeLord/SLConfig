@@ -387,6 +387,7 @@ SLCONFIG_STRING slc_get_full_name(SLCONFIG_NODE* node)
 {
 	assert(node);
 	SLCONFIG_STRING ret = {0, 0};
+	slc_append_to_string(&ret, slc_from_c_str(":"), node->config->vtable.realloc);
 	get_name_impl(node, &ret);
 	return ret;
 }
