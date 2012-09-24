@@ -283,7 +283,6 @@ string that has been shown so far):
 "a
 b";
 "a\"b\"c";
-";
 "\0\a\b\f\n\r\t\v"; // All known escape codes
 ```
 
