@@ -30,7 +30,7 @@ void print_delegate(SLCONFIG_NODE* node, int level)
 	
 	for(size_t ii = 0; ii < slc_get_num_children(node); ii++)
 	{
-		SLCONFIG_NODE* child = slc_get_children(node)[ii];
+		SLCONFIG_NODE* child = slc_get_node_by_index(node, ii);
 
 		SLCONFIG_STRING type = slc_get_type(child);
 		SLCONFIG_STRING comment = slc_get_comment(child);

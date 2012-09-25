@@ -502,9 +502,9 @@ void slc_set_user_data(SLCONFIG_NODE* node, intptr_t data,
 size_t slc_get_num_children(SLCONFIG_NODE* node);
 ```
 
-###slc_get_children
+###slc_get_node_by_index
 ```c
-SLCONFIG_NODE** slc_get_children(SLCONFIG_NODE* node);
+SLCONFIG_NODE* slc_get_node_by_index(SLCONFIG_NODE* aggregate, size_t idx);
 ```
 
 ###slc_get_name

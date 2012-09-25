@@ -450,11 +450,14 @@ SLCONFIG_STRING slc_get_comment(SLCONFIG_NODE* node)
 	return node->comment;
 }
 
-SLCONFIG_NODE** slc_get_children(SLCONFIG_NODE* node)
+SLCONFIG_NODE* slc_get_node_by_index(SLCONFIG_NODE* aggregate, size_t idx)
 {
-	assert(node);
-	if(node->is_aggregate)
-		return node->children;
+	assert(aggregate);
+	assert(aggregate->is_aggregate);
+	assert(idx < aggregate->num_children);
+	
+	if(aggregate->is_aggregate)
+		return aggregate->children[idx];
 	else
 		return 0;
 }
