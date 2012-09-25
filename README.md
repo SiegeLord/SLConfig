@@ -413,12 +413,14 @@ char* slc_to_c_str(SLCONFIG_STRING str);
 
 ###slc_append_to_string
 ```c
-void slc_append_to_string(SLCONFIG_STRING* dest, SLCONFIG_STRING new_str, void* (*custom_realloc)(void*, size_t));
+void slc_append_to_string(SLCONFIG_STRING* dest, SLCONFIG_STRING new_str, 
+                          void* (*custom_realloc)(void*, size_t));
 ```
 
 ###slc_destroy_string
 ```c
-void slc_destroy_string(SLCONFIG_STRING* str, void* (*custom_realloc)(void*, size_t));
+void slc_destroy_string(SLCONFIG_STRING* str,
+                        void* (*custom_realloc)(void*, size_t));
 ```
 
 ###SLCONFIG
@@ -443,7 +445,8 @@ void slc_destroy_config(SLCONFIG* config);
 
 ###slc_add_search_directory
 ```c
-void slc_add_search_directory(SLCONFIG* config, SLCONFIG_STRING directory, bool copy);
+void slc_add_search_directory(SLCONFIG* config, SLCONFIG_STRING directory,
+                              bool copy);
 ```
 
 ###slc_clear_search_directories
@@ -458,7 +461,8 @@ bool slc_load_config(SLCONFIG* config, SLCONFIG_STRING filename);
 
 ###slc_load_config_string
 ```c
-bool slc_load_config_string(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy);
+bool slc_load_config_string(SLCONFIG* config, SLCONFIG_STRING filename,
+                            SLCONFIG_STRING file, bool copy);
 ```
 
 ###slc_get_root
@@ -472,7 +476,9 @@ SLCONFIG_STRING slc_get_full_name(SLCONFIG_NODE* node);
 
 ###slc_add_node
 ```c
-SLCONFIG_NODE* slc_add_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type, bool copy_type, SLCONFIG_STRING name, bool copy_name, bool is_aggregate);
+SLCONFIG_NODE* slc_add_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type,
+                            bool copy_type, SLCONFIG_STRING name,
+                            bool copy_name, bool is_aggregate);
 ```
 
 ###slc_get_node
@@ -487,7 +493,8 @@ bool slc_set_value(SLCONFIG_NODE* node, SLCONFIG_STRING value, bool copy);
 
 ###slc_set_user_data
 ```c
-void slc_set_user_data(SLCONFIG_NODE* node, intptr_t data, void (*user_destructor)(intptr_t));
+void slc_set_user_data(SLCONFIG_NODE* node, intptr_t data,
+                       void (*user_destructor)(intptr_t));
 ```
 
 ###slc_get_num_children
