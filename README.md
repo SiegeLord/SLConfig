@@ -10,40 +10,42 @@ Keep in mind that there is no support for numbers in SLConfig. Even if it looks
 like a number, its just a string as far as SLConfig is concerned (it allows
 unquoted strings with some restrictions as to their content).
 
-    // Import nodes from a different file
-    #include definitions.slc
+```
+// Import nodes from a different file
+#include definitions.slc
+
+// This comment is ignored, but the next comment is accessible by user code
+/**An ant*/
+enemy Ant
+{
+    // Extracting the values of existing string nodes (it came from the include)
+    float health = $MIN_ENEMY_HEALTH;
     
-    // This comment is ignored, but the next comment is accessible by user code
-    /**An ant*/
-    enemy Ant
-    {
-        // Extracting the values of existing string nodes (it came from the include)
-        float health = $MIN_ENEMY_HEALTH;
-        
-        // Blank types are also allowed by the syntax
-        armor = 5;
-        
-        attack bite_attack;
-        
-        // Heredocs (the 'd' before the quote is the sentinel)
-        description = d"An ant, also known as a "bear" is a dangerous foe."d;
-    }
+    // Blank types are also allowed by the syntax
+    armor = 5;
     
-    enemy YellowAnt
-    {
-        // Import all nodes from the Ant node
-        $Ant;
-        
-        // String concatenation (description now holds "An ant, ... foe. This one... ")
-        // Note that single quoted strings support escape sequences ('\"' below)
-        description = $description " This one in particular is \"yellow\".";
-        
-        // Remove a node
-        ~bite_attack;
-    }
+    attack bite_attack;
     
-    // It is possible to affect nested nodes from outside the nodes they are nested in
-    YellowAnt:health = 10;
+    // Heredocs (the 'd' before the quote is the sentinel)
+    description = d"An ant, also known as a "bear" is a dangerous foe."d;
+}
+
+enemy YellowAnt
+{
+    // Import all nodes from the Ant node
+    $Ant;
+    
+    // String concatenation (description now holds "An ant, ... foe. This one... ")
+    // Note that single quoted strings support escape sequences ('\"' below)
+    description = $description " This one in particular is \"yellow\".";
+    
+    // Remove a node
+    ~bite_attack;
+}
+
+// It is possible to affect nested nodes from outside the nodes they are nested in
+YellowAnt:health = 10;
+```
 
 ## Table of Contents
 
@@ -58,6 +60,19 @@ unquoted strings with some restrictions as to their content).
 Run `make` to build the library and examples.
 
 ## Format Definition
+
+1. [Nodes](#nodes)
+2. [Comments](#comments)
+3. [Assignment](#assignment)
+4. [References](#references)
+5. [Node expansion](#node-expansion)
+6. [String concatenation](#string-concatenation)
+7. [Node deletion](#node-deletion)
+8. [File includes](#file-includes)
+9. [Strings](#strings)
+10. [Docstrings](#docstrings)
+11. [File encoding](#file-encoding)
+12. [Reserved tokens](#reserved-tokens)
 
 ### Nodes
 
@@ -354,6 +369,166 @@ language with a notable exception of heredocs.
 ```
 
 ## User API
+
+###SLCONFIG_STRING
+```c
+typedef struct
+{
+	const char* start;
+	const char* end;
+} SLCONFIG_STRING;
+```
+
+###SLCONFIG_VTABLE
+```c
+typedef struct
+{
+	void* (*realloc)(void*, size_t);
+	void (*stderr)(SLCONFIG_STRING s);
+	void* (*fopen)(SLCONFIG_STRING filename, SLCONFIG_STRING mode);
+	int (*fclose)(void*);
+	size_t (*fread)(void*, size_t, size_t, void*);
+} SLCONFIG_VTABLE;
+```
+
+###slc_string_length
+```c
+size_t slc_string_length(SLCONFIG_STRING str);
+```
+
+###slc_string_equal
+```c
+bool slc_string_equal(SLCONFIG_STRING a, SLCONFIG_STRING b);
+```
+
+###slc_from_c_str
+```c
+SLCONFIG_STRING slc_from_c_str(const char* str);
+```
+
+###slc_to_c_str
+```c
+char* slc_to_c_str(SLCONFIG_STRING str);
+```
+
+###slc_append_to_string
+```c
+void slc_append_to_string(SLCONFIG_STRING* dest, SLCONFIG_STRING new_str, void* (*custom_realloc)(void*, size_t));
+```
+
+###slc_destroy_string
+```c
+void slc_destroy_string(SLCONFIG_STRING* str, void* (*custom_realloc)(void*, size_t));
+```
+
+###SLCONFIG
+```c
+typedef struct SLCONFIG SLCONFIG;
+```
+
+###SLCONFIG_NODE
+```c
+typedef struct SLCONFIG_NODE SLCONFIG_NODE;
+```
+
+###slc_create_config
+```c
+SLCONFIG* slc_create_config(const SLCONFIG_VTABLE* vtable);
+```
+
+###slc_destroy_config
+```c
+void slc_destroy_config(SLCONFIG* config);
+```
+
+###slc_add_search_directory
+```c
+void slc_add_search_directory(SLCONFIG* config, SLCONFIG_STRING directory, bool copy);
+```
+
+###slc_clear_search_directories
+```c
+void slc_clear_search_directories(SLCONFIG* config);
+```
+
+###slc_load_config
+```c
+bool slc_load_config(SLCONFIG* config, SLCONFIG_STRING filename);
+```
+
+###slc_load_config_string
+```c
+bool slc_load_config_string(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy);
+```
+
+###slc_get_root
+```c
+SLCONFIG_NODE* slc_get_root(SLCONFIG* config);
+```
+###slc_get_full_name
+```c
+SLCONFIG_STRING slc_get_full_name(SLCONFIG_NODE* node);
+```
+
+###slc_add_node
+```c
+SLCONFIG_NODE* slc_add_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type, bool copy_type, SLCONFIG_STRING name, bool copy_name, bool is_aggregate);
+```
+
+###slc_get_node
+```c
+SLCONFIG_NODE* slc_get_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING name);
+```
+
+###slc_set_value
+```c
+bool slc_set_value(SLCONFIG_NODE* node, SLCONFIG_STRING value, bool copy);
+```
+
+###slc_set_user_data
+```c
+void slc_set_user_data(SLCONFIG_NODE* node, intptr_t data, void (*user_destructor)(intptr_t));
+```
+
+###slc_get_num_children
+```c
+size_t slc_get_num_children(SLCONFIG_NODE* node);
+```
+
+###slc_get_children
+```c
+SLCONFIG_NODE** slc_get_children(SLCONFIG_NODE* node);
+```
+
+###slc_get_name
+```c
+SLCONFIG_STRING slc_get_name(SLCONFIG_NODE* node);
+```
+
+###slc_get_type
+```c
+SLCONFIG_STRING slc_get_type(SLCONFIG_NODE* node);
+```
+
+###slc_is_aggregate
+```c
+bool slc_is_aggregate(SLCONFIG_NODE* node);
+```
+
+###slc_get_value
+```c
+SLCONFIG_STRING slc_get_value(SLCONFIG_NODE* node);
+```
+
+###slc_get_comment
+```c
+SLCONFIG_STRING slc_get_comment(SLCONFIG_NODE* node);
+```
+
+###slc_destroy_node
+```c
+void slc_destroy_node(SLCONFIG_NODE* node);
+```
 
 ## License
 
