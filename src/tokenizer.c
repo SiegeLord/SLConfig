@@ -236,8 +236,23 @@ bool token_string(SLCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 			str->start++;
 	}
 	
-	_slc_print_error_prefix(state->config, state->filename, start_line, state->vtable);
-	state->vtable->stderr(slc_from_c_str("Error: Unterminated string.\n"));
+	if(!first_quote)
+	{
+		pre_quote.end = str->start;
+		goto exit;
+	}
+	else if(second_quote)
+	{
+		post_quote.end = str->start;
+		if(slc_string_equal(pre_quote, post_quote))
+			goto exit;
+	}
+	
+	if(!state->gag_errors)
+	{
+		_slc_print_error_prefix(state->config, state->filename, start_line, state->vtable);
+		state->vtable->stderr(slc_from_c_str("Error: Unterminated string.\n"));
+	}
 	token->type = TOKEN_ERROR;
 	return true;
 exit:
@@ -360,8 +375,11 @@ bool token_block_comment(SLCONFIG_STRING* str, TOKEN* token, TOKENIZER_STATE* st
 					str->start++;
 			}
 
-			_slc_print_error_prefix(state->config, state->filename, start_line, state->vtable);
-			state->vtable->stderr(slc_from_c_str("Error: Unterminated block comment.\n"));
+			if(!state->gag_errors)
+			{
+				_slc_print_error_prefix(state->config, state->filename, start_line, state->vtable);
+				state->vtable->stderr(slc_from_c_str("Error: Unterminated block comment.\n"));
+			}
 			token->type = TOKEN_ERROR;
 			return true;
 		exit:

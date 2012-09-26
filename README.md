@@ -507,6 +507,11 @@ size_t slc_get_num_children(SLCONFIG_NODE* node);
 SLCONFIG_NODE* slc_get_node_by_index(SLCONFIG_NODE* aggregate, size_t idx);
 ```
 
+###slc_get_node_by_reference
+```c
+SLCONFIG_NODE* slc_get_node_by_reference(SLCONFIG_NODE* aggregate, SLCONFIG_STRING reference);
+```
+
 ###slc_get_name
 ```c
 SLCONFIG_STRING slc_get_name(SLCONFIG_NODE* node);

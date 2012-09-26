@@ -774,6 +774,7 @@ bool _slc_parse_file(SLCONFIG* config, SLCONFIG_NODE* root, SLCONFIG_STRING file
 	state.vtable = &config->vtable;
 	state.str = file;
 	state.config = config;
+	state.gag_errors = false;
 	
 	PARSER_STATE parser_state;
 	memset(&parser_state, 0, sizeof(PARSER_STATE));
@@ -792,4 +793,62 @@ bool _slc_parse_file(SLCONFIG* config, SLCONFIG_NODE* root, SLCONFIG_STRING file
 	slc_destroy_string(&parser_state.comment, config->vtable.realloc);
 	
 	return ret;
+}
+
+SLCONFIG_NODE* slc_get_node_by_reference(SLCONFIG_NODE* aggregate, SLCONFIG_STRING reference)
+{
+	assert(aggregate);
+	if(!aggregate->is_aggregate)
+		return 0;
+
+	TOKENIZER_STATE state;
+	state.filename = slc_from_c_str("");
+	state.line = 1;
+	state.vtable = &aggregate->config->vtable;
+	state.str = reference;
+	state.config = aggregate->config;
+	state.gag_errors = false;
+	
+	SLCONFIG_NODE* ret = 0;
+	
+	_slc_get_next_token(&state);
+	if(state.cur_token.type == TOKEN_DOUBLE_COLON)
+	{
+		aggregate = aggregate->config->root;
+		_slc_get_next_token(&state);
+	}
+	
+	while(state.cur_token.type == TOKEN_STRING)
+	{
+		if(ret == 0)
+			ret = _slc_search_node(aggregate, state.cur_token.str);
+		else
+			ret = slc_get_node(aggregate, state.cur_token.str);
+
+		if(state.cur_token.own)
+			slc_destroy_string(&state.cur_token.str, aggregate->config->vtable.realloc);
+		
+		if(ret == 0)
+			return 0;
+		
+		_slc_get_next_token(&state);
+		if(state.cur_token.type == TOKEN_COLON)
+		{
+			if(!ret->is_aggregate)
+				return 0;
+			
+			aggregate = ret;
+			_slc_get_next_token(&state);
+		}
+		else if(state.cur_token.type == TOKEN_EOF)
+		{
+			return ret;
+		}
+		else
+		{
+			break;
+		}
+	}
+	
+	return 0;
 }

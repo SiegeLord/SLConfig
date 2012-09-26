@@ -41,6 +41,7 @@ typedef struct
 	size_t line;
 	SLCONFIG_VTABLE* vtable;
 	TOKEN cur_token;
+	bool gag_errors;
 } TOKENIZER_STATE;
 
 TOKEN _slc_get_next_token(TOKENIZER_STATE* state);
