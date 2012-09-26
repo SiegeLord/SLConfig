@@ -446,12 +446,12 @@ void slc_clear_search_directories(SLCONFIG_NODE* node);
 
 ###slc_load_config
 ```c
-bool slc_load_config(SLCONFIG_NODE* node, SLCONFIG_STRING filename);
+bool slc_load_config(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename);
 ```
 
 ###slc_load_config_string
 ```c
-bool slc_load_config_string(SLCONFIG_NODE* node, SLCONFIG_STRING filename,
+bool slc_load_config_string(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename,
                             SLCONFIG_STRING file, bool copy);
 ```
 

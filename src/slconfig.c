@@ -152,38 +152,43 @@ bool _slc_load_file(CONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING* f
 	return true;
 }
 
-bool slc_load_config(SLCONFIG_NODE* node, SLCONFIG_STRING filename)
+bool slc_load_config(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename)
 {
-	assert(node);
-	assert(node->is_aggregate);
-	if(!node->is_aggregate)
+	assert(aggregate);
+	assert(aggregate->is_aggregate);
+	if(!aggregate->is_aggregate)
 		return false;
-	_slc_add_include(node->config, filename, false, 0);
+	CONFIG = aggregate->config;
+	_slc_add_include(config, filename, false, 0);
 	SLCONFIG_STRING file = {0, 0};
-	bool ret = _slc_load_file(node->config, filename, &file);
+	bool ret = _slc_load_file(config, filename, &file);
 	if(ret)
-		ret = _slc_parse_file(node->config, node, filename, file);
-	_slc_clear_includes(node->config);
+		ret = _slc_parse_file(config, aggregate, filename, file);
+	_slc_clear_includes(config);
 	return ret;
 }
 
-bool slc_load_config_string(SLCONFIG_NODE* node, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy)
+bool slc_load_config_string(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy)
 {	
-	assert(node);
+	assert(aggregate);
+	assert(aggregate->is_aggregate);
+	if(!aggregate->is_aggregate)
+		return false;
+	CONFIG = aggregate->config;
 	SLCONFIG_STRING new_file = {0, 0};
 	if(copy)
 	{
-		slc_append_to_string(&new_file, file, node->config->vtable.realloc);
-		_slc_add_file(node->config, new_file);
+		slc_append_to_string(&new_file, file, config->vtable.realloc);
+		_slc_add_file(config, new_file);
 	}
 	else
 	{
 		new_file = file;
 	}
 	
-	_slc_add_include(node->config, filename, false, 0);
-	bool ret = _slc_parse_file(node->config, node, filename, new_file);
-	_slc_clear_includes(node->config);
+	_slc_add_include(config, filename, false, 0);
+	bool ret = _slc_parse_file(config, aggregate, filename, new_file);
+	_slc_clear_includes(config);
 	return ret;
 }
 

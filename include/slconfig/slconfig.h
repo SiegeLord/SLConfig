@@ -34,8 +34,8 @@ SLCONFIG_NODE* slc_create_config(const SLCONFIG_VTABLE* vtable);
 void slc_add_search_directory(SLCONFIG_NODE* node, SLCONFIG_STRING directory, bool copy);
 void slc_clear_search_directories(SLCONFIG_NODE* node);
 
-bool slc_load_config(SLCONFIG_NODE* node, SLCONFIG_STRING filename);
-bool slc_load_config_string(SLCONFIG_NODE* node, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy);
+bool slc_load_config(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename);
+bool slc_load_config_string(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy);
 
 SLCONFIG_STRING slc_get_full_name(SLCONFIG_NODE* node);
 
