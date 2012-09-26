@@ -570,7 +570,8 @@ bool slc_load_nodes_string(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename,
 
 ###slc_save_node
 ```c
-bool slc_save_node(SLCONFIG_NODE* node, SLCONFIG_STRING filename, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation);
+bool slc_save_node(SLCONFIG_NODE* node, SLCONFIG_STRING filename,
+                   SLCONFIG_STRING line_end, SLCONFIG_STRING indentation);
 ```
 
 ###slc_save_node_string
