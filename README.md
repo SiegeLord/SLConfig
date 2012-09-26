@@ -566,7 +566,8 @@ bool slc_load_config_string(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename,
 ```
 ###slc_node_to_string
 ```c
-SLCONFIG_STRING slc_node_to_string(SLCONFIG_NODE* node, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation);
+SLCONFIG_STRING slc_node_to_string(SLCONFIG_NODE* node, SLCONFIG_STRING line_end,
+                                   SLCONFIG_STRING indentation);
 ```
 
 ###slc_add_node
