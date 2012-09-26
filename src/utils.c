@@ -45,7 +45,7 @@ void slc_destroy_string(SLCONFIG_STRING* str, void* (*custom_realloc)(void*, siz
 /*
  * Just print a standard error prefix
  */
-void _slc_print_error_prefix(SLCONFIG* config, SLCONFIG_STRING filename, size_t line, SLCONFIG_VTABLE* table)
+void _slc_print_error_prefix(CONFIG* config, SLCONFIG_STRING filename, size_t line, SLCONFIG_VTABLE* table)
 {
 	char buf[32];
 	if(config->num_includes > 1)
@@ -76,7 +76,7 @@ void _slc_print_error_prefix(SLCONFIG* config, SLCONFIG_STRING filename, size_t 
 /*
  * Error: Expected <expected> after '<after>', not '<actual>'
  */
-void _slc_expected_after_error(SLCONFIG* config, TOKENIZER_STATE* state, size_t line, SLCONFIG_STRING expected, SLCONFIG_STRING after, SLCONFIG_STRING actual)
+void _slc_expected_after_error(CONFIG* config, TOKENIZER_STATE* state, size_t line, SLCONFIG_STRING expected, SLCONFIG_STRING after, SLCONFIG_STRING actual)
 {
 	_slc_print_error_prefix(config, state->filename, line, state->vtable);
 	state->vtable->stderr(slc_from_c_str("Error: Expected "));
@@ -91,7 +91,7 @@ void _slc_expected_after_error(SLCONFIG* config, TOKENIZER_STATE* state, size_t 
 /*
  * Error: Expected '<expected>' not '<actual>'
  */
-void _slc_expected_error(SLCONFIG* config, TOKENIZER_STATE* state, size_t line, SLCONFIG_STRING expected, SLCONFIG_STRING actual)
+void _slc_expected_error(CONFIG* config, TOKENIZER_STATE* state, size_t line, SLCONFIG_STRING expected, SLCONFIG_STRING actual)
 {
 	_slc_print_error_prefix(config, state->filename, line, state->vtable);
 	state->vtable->stderr(slc_from_c_str("Error: Expected '"));
@@ -141,7 +141,7 @@ char* slc_to_c_str(SLCONFIG_STRING str)
 /*
  * Just to avoid realloc(0, 0) and make the intention clear
  */
-void _slc_free(SLCONFIG* config, void* ptr)
+void _slc_free(CONFIG* config, void* ptr)
 {
 	if(ptr)
 	{

@@ -423,11 +423,6 @@ void slc_destroy_string(SLCONFIG_STRING* str,
                         void* (*custom_realloc)(void*, size_t));
 ```
 
-###SLCONFIG
-```c
-typedef struct SLCONFIG SLCONFIG;
-```
-
 ###SLCONFIG_NODE
 ```c
 typedef struct SLCONFIG_NODE SLCONFIG_NODE;
@@ -435,40 +430,32 @@ typedef struct SLCONFIG_NODE SLCONFIG_NODE;
 
 ###slc_create_config
 ```c
-SLCONFIG* slc_create_config(const SLCONFIG_VTABLE* vtable);
-```
-
-###slc_destroy_config
-```c
-void slc_destroy_config(SLCONFIG* config);
+SLCONFIG_NODE* slc_create_config(const SLCONFIG_VTABLE* vtable);
 ```
 
 ###slc_add_search_directory
 ```c
-void slc_add_search_directory(SLCONFIG* config, SLCONFIG_STRING directory,
+void slc_add_search_directory(SLCONFIG_NODE* node, SLCONFIG_STRING directory,
                               bool copy);
 ```
 
 ###slc_clear_search_directories
 ```c
-void slc_clear_search_directories(SLCONFIG* config);
+void slc_clear_search_directories(SLCONFIG_NODE* node);
 ```
 
 ###slc_load_config
 ```c
-bool slc_load_config(SLCONFIG* config, SLCONFIG_STRING filename);
+bool slc_load_config(SLCONFIG_NODE* node, SLCONFIG_STRING filename);
 ```
 
 ###slc_load_config_string
 ```c
-bool slc_load_config_string(SLCONFIG* config, SLCONFIG_STRING filename,
+bool slc_load_config_string(SLCONFIG_NODE* node, SLCONFIG_STRING filename,
                             SLCONFIG_STRING file, bool copy);
 ```
 
-###slc_get_root
-```c
-SLCONFIG_NODE* slc_get_root(SLCONFIG* config);
-```
+
 ###slc_get_full_name
 ```c
 SLCONFIG_STRING slc_get_full_name(SLCONFIG_NODE* node);

@@ -4,7 +4,7 @@
 #include "slconfig/internal/slconfig.h"
 #include "slconfig/internal/tokenizer.h"
 
-bool _slc_parse_file(SLCONFIG* config, SLCONFIG_NODE* root, SLCONFIG_STRING filename, SLCONFIG_STRING file);
+bool _slc_parse_file(CONFIG* config, SLCONFIG_NODE* root, SLCONFIG_STRING filename, SLCONFIG_STRING file);
 
 #endif
 

@@ -6,8 +6,8 @@
 #include "slconfig/slconfig.h"
 #include "slconfig/internal/tokenizer.h"
 
-void _slc_print_error_prefix(SLCONFIG* config, SLCONFIG_STRING filename, size_t line, SLCONFIG_VTABLE* table);
-void _slc_expected_after_error(SLCONFIG* config, TOKENIZER_STATE* state, size_t line, SLCONFIG_STRING expected, SLCONFIG_STRING after, SLCONFIG_STRING actual);
-void _slc_expected_error(SLCONFIG* config, TOKENIZER_STATE* state, size_t line, SLCONFIG_STRING expected, SLCONFIG_STRING actual);
+void _slc_print_error_prefix(CONFIG* config, SLCONFIG_STRING filename, size_t line, SLCONFIG_VTABLE* table);
+void _slc_expected_after_error(CONFIG* config, TOKENIZER_STATE* state, size_t line, SLCONFIG_STRING expected, SLCONFIG_STRING after, SLCONFIG_STRING actual);
+void _slc_expected_error(CONFIG* config, TOKENIZER_STATE* state, size_t line, SLCONFIG_STRING expected, SLCONFIG_STRING actual);
 
 #endif

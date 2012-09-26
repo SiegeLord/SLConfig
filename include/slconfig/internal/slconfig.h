@@ -3,7 +3,7 @@
 
 #include "slconfig/slconfig.h"
 
-struct SLCONFIG
+typedef struct
 {
 	SLCONFIG_STRING* files;
 	size_t num_files;
@@ -22,7 +22,7 @@ struct SLCONFIG
 	SLCONFIG_STRING* search_dirs;
 	bool* search_dir_ownerships;
 	size_t num_search_dirs;
-};
+} CONFIG;
 
 struct SLCONFIG_NODE
 {
@@ -43,7 +43,7 @@ struct SLCONFIG_NODE
 	
 	SLCONFIG_NODE* parent;
 	bool is_aggregate;
-	SLCONFIG* config;
+	CONFIG* config;
 };
 
 SLCONFIG_NODE* _slc_search_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING name);
@@ -51,12 +51,12 @@ SLCONFIG_NODE* _slc_add_node_no_attach(SLCONFIG_NODE* aggregate, SLCONFIG_STRING
 void _slc_attach_node(SLCONFIG_NODE* aggregate, SLCONFIG_NODE* node);
 void _slc_copy_into(SLCONFIG_NODE* dest, SLCONFIG_NODE* src);
 void _slc_destroy_node(SLCONFIG_NODE* node, bool detach);
-void _slc_free(SLCONFIG* config, void*);
-void _slc_add_file(SLCONFIG* config, SLCONFIG_STRING new_file);
-bool _slc_load_file(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING* file);
+void _slc_free(CONFIG* config, void*);
+void _slc_add_file(CONFIG* config, SLCONFIG_STRING new_file);
+bool _slc_load_file(CONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING* file);
 
-bool _slc_add_include(SLCONFIG* config, SLCONFIG_STRING filename, bool own, size_t line);
-void _slc_pop_include(SLCONFIG* config);
-void _slc_clear_includes(SLCONFIG* config);
+bool _slc_add_include(CONFIG* config, SLCONFIG_STRING filename, bool own, size_t line);
+void _slc_pop_include(CONFIG* config);
+void _slc_clear_includes(CONFIG* config);
 
 #endif

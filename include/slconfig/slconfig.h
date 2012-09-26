@@ -27,19 +27,16 @@ char* slc_to_c_str(SLCONFIG_STRING str);
 void slc_append_to_string(SLCONFIG_STRING* dest, SLCONFIG_STRING new_str, void* (*custom_realloc)(void*, size_t));
 void slc_destroy_string(SLCONFIG_STRING* str, void* (*custom_realloc)(void*, size_t));
 
-typedef struct SLCONFIG SLCONFIG;
 typedef struct SLCONFIG_NODE SLCONFIG_NODE;
 
-SLCONFIG* slc_create_config(const SLCONFIG_VTABLE* vtable);
-void slc_destroy_config(SLCONFIG* config);
+SLCONFIG_NODE* slc_create_config(const SLCONFIG_VTABLE* vtable);
 
-void slc_add_search_directory(SLCONFIG* config, SLCONFIG_STRING directory, bool copy);
-void slc_clear_search_directories(SLCONFIG* config);
+void slc_add_search_directory(SLCONFIG_NODE* node, SLCONFIG_STRING directory, bool copy);
+void slc_clear_search_directories(SLCONFIG_NODE* node);
 
-bool slc_load_config(SLCONFIG* config, SLCONFIG_STRING filename);
-bool slc_load_config_string(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy);
+bool slc_load_config(SLCONFIG_NODE* node, SLCONFIG_STRING filename);
+bool slc_load_config_string(SLCONFIG_NODE* node, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy);
 
-SLCONFIG_NODE* slc_get_root(SLCONFIG* config);
 SLCONFIG_STRING slc_get_full_name(SLCONFIG_NODE* node);
 
 SLCONFIG_NODE* slc_add_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type, bool copy_type, SLCONFIG_STRING name, bool copy_name, bool is_aggregate);

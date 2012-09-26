@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 	int ret = -1;
-	SLCONFIG* config = slc_create_config(0);
+	SLCONFIG_NODE* root = slc_create_config(0);
 	
 	for(int ii = 1; ii < argc - 1; ii++)
 	{
@@ -91,14 +91,12 @@ int main(int argc, char** argv)
 			goto exit;
 		}
 		arg++;
-		slc_add_search_directory(config, slc_from_c_str(arg), false);
+		slc_add_search_directory(root, slc_from_c_str(arg), false);
 	}
-	
-	SLCONFIG_NODE* root = slc_get_root(config);
 	
 	SLCONFIG_NODE* node = slc_add_node(root, slc_from_c_str(""), false, slc_from_c_str("external"), false, false);
 	slc_set_value(node, slc_from_c_str("external_value"), false);
-	if(slc_load_config(config, slc_from_c_str(argv[argc - 1])))
+	if(slc_load_config(root, slc_from_c_str(argv[argc - 1])))
 	{
 		print_delegate(root, 0);
 		ret = 0;
@@ -108,6 +106,6 @@ int main(int argc, char** argv)
 		fprintf(stderr, "Error loading %s.\n", argv[argc - 1]);
 	}
 exit:
-	slc_destroy_config(config);
+	slc_destroy_node(root);
 	return ret;
 }

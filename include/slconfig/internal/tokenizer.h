@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "slconfig/slconfig.h"
+#include "slconfig/internal/slconfig.h"
 
 #define LF ('\x0A')
 #define CR ('\x0D')
@@ -35,7 +36,7 @@ typedef struct
 
 typedef struct
 {
-	SLCONFIG* config;
+	CONFIG* config;
 	SLCONFIG_STRING filename;
 	SLCONFIG_STRING str;
 	size_t line;

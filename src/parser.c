@@ -19,6 +19,7 @@
 #include "slconfig/internal/parser.h"
 #include "slconfig/internal/tokenizer.h"
 #include "slconfig/internal/utils.h"
+#include "slconfig/internal/slconfig.h"
 #include "slconfig/slconfig.h"
 
 #include <stdio.h>
@@ -41,7 +42,7 @@ typedef struct
 	bool free_token;
 } PARSER_STATE;
 
-static bool parse_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state);
+static bool parse_aggregate(CONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state);
 
 /* Wrapper around _slc_get_next_token to chomp up the docstrings and ignore comments. */
 static
@@ -112,7 +113,7 @@ void set_new_node(PARSER_STATE* state, SLCONFIG_NODE* node, size_t line)
  * Parse a node reference statement given the first name in the refence statement
  */
 static
-bool parse_node_ref_name(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_STRING name, size_t name_line, SLCONFIG_NODE** ref_node, PARSER_STATE* state)
+bool parse_node_ref_name(CONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_STRING name, size_t name_line, SLCONFIG_NODE** ref_node, PARSER_STATE* state)
 {
 	(void)config;
 	SLCONFIG_NODE* ret = 0;
@@ -175,7 +176,7 @@ bool parse_node_ref_name(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_ST
  * Parse a node reference statement
  */
 static
-bool parse_node_ref(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_NODE** ref_node, PARSER_STATE* state)
+bool parse_node_ref(CONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_NODE** ref_node, PARSER_STATE* state)
 {
 	SLCONFIG_STRING name;
 	size_t name_line;
@@ -214,7 +215,7 @@ bool parse_node_ref(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_NODE** 
 
 /* Get the string value of a single expression on the right hand side of a string assign statement and append it to the current rhs string */
 static
-bool parse_right_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_STRING* rhs, PARSER_STATE* state)
+bool parse_right_hand_side(CONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_STRING* rhs, PARSER_STATE* state)
 {	
 	SLCONFIG_STRING str;
 	bool own_str = false;
@@ -275,7 +276,7 @@ bool parse_right_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_
  * or a new node needs to be created
  */
 static
-bool parse_left_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_NODE** lhs_node, bool* expect_assign, PARSER_STATE* state)
+bool parse_left_hand_side(CONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_NODE** lhs_node, bool* expect_assign, PARSER_STATE* state)
 {
 	size_t name_line = state->line;
 	*expect_assign = false;
@@ -404,7 +405,7 @@ bool parse_left_hand_side(SLCONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_N
 
 /* Parse an assign statement */
 static
-bool parse_assign_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
+bool parse_assign_expression(CONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
 {
 	SLCONFIG_NODE* lhs = 0;
 	bool is_new = false;
@@ -525,7 +526,7 @@ error:
 
 /* Parse the remove statement*/
 static
-bool parse_remove(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
+bool parse_remove(CONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
 {
 	if(state->cur_token.type == TOKEN_TILDE)
 	{
@@ -549,7 +550,7 @@ bool parse_remove(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* stat
 
 /* Parse an expand aggregate statement */
 static
-bool parse_expand_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
+bool parse_expand_aggregate(CONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
 {
 	if(state->cur_token.type == TOKEN_DOLLAR)
 	{
@@ -638,7 +639,7 @@ bool parse_expand_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_S
 
 /* Parse an include statement */
 static
-bool parse_include_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
+bool parse_include_expression(CONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
 {
 	if(state->cur_token.type == TOKEN_HASH)
 	{
@@ -711,7 +712,7 @@ bool parse_include_expression(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER
 
 /* Chomp up the statements in the root, or between braces in an aggregate. The braces are taken care of by this function */
 static
-bool parse_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
+bool parse_aggregate(CONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
 {
 	TOKEN tok = state->cur_token;
 	size_t start_line = state->line;
@@ -766,7 +767,7 @@ bool parse_aggregate(SLCONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* s
 	return true;
 }
 
-bool _slc_parse_file(SLCONFIG* config, SLCONFIG_NODE* root, SLCONFIG_STRING filename, SLCONFIG_STRING file)
+bool _slc_parse_file(CONFIG* config, SLCONFIG_NODE* root, SLCONFIG_STRING filename, SLCONFIG_STRING file)
 {	
 	TOKENIZER_STATE state;
 	state.filename = filename;

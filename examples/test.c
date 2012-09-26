@@ -29,8 +29,7 @@ bool test_references()
 {
 	bool ret = true;
 
-	SLCONFIG* config = slc_create_config(0);
-	SLCONFIG_NODE* root = slc_get_root(config);
+	SLCONFIG_NODE* root = slc_create_config(0);
 	SLCONFIG_NODE* var = slc_add_node(root, slc_from_c_str(""), false, slc_from_c_str("var"), false, false);
 	SLCONFIG_NODE* aggr = slc_add_node(root, slc_from_c_str(""), false, slc_from_c_str("aggr"), false, true);
 	SLCONFIG_NODE* var2 = slc_add_node(aggr, slc_from_c_str(""), false, slc_from_c_str("var"), false, false);
@@ -43,7 +42,7 @@ bool test_references()
 	TEST(slc_get_node_by_reference(aggr, slc_from_c_str("::aggr:var")) == var2);
 	TEST(slc_get_node_by_reference(aggr, slc_from_c_str("d\"aggr\"d:\"var\"")) == var2);
 	
-	slc_destroy_config(config);
+	slc_destroy_node(root);
 	
 	return ret;
 }

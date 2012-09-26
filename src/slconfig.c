@@ -82,7 +82,7 @@ void fill_vtable(SLCONFIG_VTABLE* vtable)
 #undef FILL
 }
 
-SLCONFIG* slc_create_config(const SLCONFIG_VTABLE* vtable_ptr)
+SLCONFIG_NODE* slc_create_config(const SLCONFIG_VTABLE* vtable_ptr)
 {
 	SLCONFIG_VTABLE vtable;
 	if(vtable_ptr)
@@ -91,26 +91,26 @@ SLCONFIG* slc_create_config(const SLCONFIG_VTABLE* vtable_ptr)
 		memset(&vtable, 0, sizeof(SLCONFIG_VTABLE));
 	fill_vtable(&vtable);
 	
-	SLCONFIG* ret = vtable.realloc(0, sizeof(SLCONFIG));
-	ret->vtable = vtable;
-	ret->files = 0;
-	ret->num_files = 0;
-	ret->root = vtable.realloc(0, sizeof(SLCONFIG_NODE));
-	memset(ret->root, 0, sizeof(SLCONFIG_NODE));
-	ret->root->is_aggregate = true;
-	ret->root->config = ret;
-	ret->num_includes = 0;
-	ret->include_list = 0;
-	ret->include_lines = 0;
-	ret->include_ownerships = 0;
-	ret->num_search_dirs = 0;
-	ret->search_dirs = 0;
-	ret->search_dir_ownerships = 0;
+	CONFIG* config = vtable.realloc(0, sizeof(CONFIG));
+	config->vtable = vtable;
+	config->files = 0;
+	config->num_files = 0;
+	config->root = vtable.realloc(0, sizeof(SLCONFIG_NODE));
+	memset(config->root, 0, sizeof(SLCONFIG_NODE));
+	config->root->is_aggregate = true;
+	config->root->config = config;
+	config->num_includes = 0;
+	config->include_list = 0;
+	config->include_lines = 0;
+	config->include_ownerships = 0;
+	config->num_search_dirs = 0;
+	config->search_dirs = 0;
+	config->search_dir_ownerships = 0;
 	
-	return ret;
+	return config->root;
 }
 
-bool _slc_load_file(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING* file)
+bool _slc_load_file(CONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING* file)
 {
 	assert(config);
 	
@@ -152,58 +152,56 @@ bool _slc_load_file(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING*
 	return true;
 }
 
-bool slc_load_config(SLCONFIG* config, SLCONFIG_STRING filename)
+bool slc_load_config(SLCONFIG_NODE* node, SLCONFIG_STRING filename)
 {
-	assert(config);
-	_slc_add_include(config, filename, false, 0);
+	assert(node);
+	assert(node->is_aggregate);
+	if(!node->is_aggregate)
+		return false;
+	_slc_add_include(node->config, filename, false, 0);
 	SLCONFIG_STRING file = {0, 0};
-	bool ret = _slc_load_file(config, filename, &file);
+	bool ret = _slc_load_file(node->config, filename, &file);
 	if(ret)
-		ret = _slc_parse_file(config, config->root, filename, file);
-	_slc_clear_includes(config);
+		ret = _slc_parse_file(node->config, node, filename, file);
+	_slc_clear_includes(node->config);
 	return ret;
 }
 
-bool slc_load_config_string(SLCONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy)
+bool slc_load_config_string(SLCONFIG_NODE* node, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy)
 {	
-	assert(config);
+	assert(node);
 	SLCONFIG_STRING new_file = {0, 0};
 	if(copy)
 	{
-		slc_append_to_string(&new_file, file, config->vtable.realloc);
-		_slc_add_file(config, new_file);
+		slc_append_to_string(&new_file, file, node->config->vtable.realloc);
+		_slc_add_file(node->config, new_file);
 	}
 	else
 	{
 		new_file = file;
 	}
 	
-	_slc_add_include(config, filename, false, 0);
-	bool ret = _slc_parse_file(config, config->root, filename, new_file);
-	_slc_clear_includes(config);
+	_slc_add_include(node->config, filename, false, 0);
+	bool ret = _slc_parse_file(node->config, node, filename, new_file);
+	_slc_clear_includes(node->config);
 	return ret;
 }
 
-void slc_destroy_config(SLCONFIG* config)
+static
+void destroy_config(CONFIG* config)
 {
 	if(!config)
 		return;
-	
-	slc_destroy_node(config->root);
-	/* Free it explicitly, as slc_destroy_node doesn't do that to root */
-	_slc_free(config, config->root);
 	
 	for(size_t ii = 0; ii < config->num_files; ii++)
 		slc_destroy_string(&config->files[ii], config->vtable.realloc);
 	
 	_slc_free(config, config->files);
 	
-	slc_clear_search_directories(config);
-	
-	_slc_free(config, config);
+	slc_clear_search_directories(config->root);
 }
 
-void _slc_add_file(SLCONFIG* config, SLCONFIG_STRING new_file)
+void _slc_add_file(CONFIG* config, SLCONFIG_STRING new_file)
 {
 	assert(config);
 	config->files = config->vtable.realloc(config->files, (config->num_files + 1) * sizeof(SLCONFIG_STRING));
@@ -262,7 +260,6 @@ void _slc_destroy_node(SLCONFIG_NODE* node, bool detach)
 	if(node->user_destructor)
 		node->user_destructor(node->user_data);
 	
-	/* Don't free the root */
 	if(node->parent)
 	{
 		if(detach)
@@ -270,8 +267,13 @@ void _slc_destroy_node(SLCONFIG_NODE* node, bool detach)
 		
 		_slc_free(node->config, node);
 	}
-	
-	/* TODO: Make the destroyed node (in case of root) still usable after destruction */
+	else
+	{
+		CONFIG* config = node->config;
+		destroy_config(config);
+		_slc_free(config, node);
+		_slc_free(config, config);
+	}
 }
 
 void slc_destroy_node(SLCONFIG_NODE* node)
@@ -364,12 +366,6 @@ SLCONFIG_NODE* slc_add_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type, bool
 	if(node)
 		_slc_attach_node(aggregate, node);
 	return node;
-}
-
-SLCONFIG_NODE* slc_get_root(SLCONFIG* config)
-{
-	assert(config);
-	return config->root;
 }
 
 static
@@ -500,7 +496,7 @@ void _slc_copy_into(SLCONFIG_NODE* dest, SLCONFIG_NODE* src)
 	}
 }
 
-bool _slc_add_include(SLCONFIG* config, SLCONFIG_STRING filename, bool own, size_t line)
+bool _slc_add_include(CONFIG* config, SLCONFIG_STRING filename, bool own, size_t line)
 {
 	assert(config);
 	
@@ -524,7 +520,7 @@ bool _slc_add_include(SLCONFIG* config, SLCONFIG_STRING filename, bool own, size
 	return true;
 }
 
-void _slc_pop_include(SLCONFIG* config)
+void _slc_pop_include(CONFIG* config)
 {
 	assert(config);
 	assert(config->num_includes > 0);
@@ -532,7 +528,7 @@ void _slc_pop_include(SLCONFIG* config)
 		config->num_includes--;
 }
 
-void _slc_clear_includes(SLCONFIG* config)
+void _slc_clear_includes(CONFIG* config)
 {
 	assert(config);
 	
@@ -565,9 +561,10 @@ void slc_set_user_data(SLCONFIG_NODE* node, intptr_t data, void (*user_destructo
 	node->user_destructor = user_destructor;
 }
 
-void slc_add_search_directory(SLCONFIG* config, SLCONFIG_STRING directory, bool copy)
+void slc_add_search_directory(SLCONFIG_NODE* node, SLCONFIG_STRING directory, bool copy)
 {
-	assert(config);
+	assert(node);
+	CONFIG* config = node->config;
 	config->search_dirs = config->vtable.realloc(config->search_dirs, sizeof(SLCONFIG_STRING) * (config->num_search_dirs + 1));
 	config->search_dir_ownerships = config->vtable.realloc(config->search_dir_ownerships, sizeof(bool) * (config->num_search_dirs + 1));
 	
@@ -583,10 +580,10 @@ void slc_add_search_directory(SLCONFIG* config, SLCONFIG_STRING directory, bool 
 	config->num_search_dirs++;
 }
 
-void slc_clear_search_directories(SLCONFIG* config)
+void slc_clear_search_directories(SLCONFIG_NODE* node)
 {
-	assert(config);
-	
+	assert(node);
+	CONFIG* config = node->config;
 	for(size_t ii = 0; ii < config->num_search_dirs; ii++)
 	{
 		if(config->search_dir_ownerships[ii])
