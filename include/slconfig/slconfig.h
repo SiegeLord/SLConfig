@@ -18,7 +18,7 @@ typedef struct
 	void (*stderr)(SLCONFIG_STRING s);
 	void* (*fopen)(SLCONFIG_STRING filename, bool read);
 	int (*fclose)(void*);
-	size_t (*fread)(void*, size_t, size_t, void*);
+	size_t (*fread)(void*, size_t, void*);
 } SLCONFIG_VTABLE;
 
 typedef struct SLCONFIG_NODE SLCONFIG_NODE;

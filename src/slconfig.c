@@ -48,9 +48,9 @@ int default_fclose(void* f)
 }
 
 static
-size_t default_fread(void* buf, size_t size, size_t nmemb, void* f)
+size_t default_fread(void* buf, size_t size, void* f)
 {
-	return fread(buf, size, nmemb, f);
+	return fread(buf, 1, size, f);
 }
 
 static
@@ -138,7 +138,7 @@ bool _slc_load_file(CONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING* f
 	do
 	{
 		buff = config->vtable.realloc(buff, total_bytes_read + BUF_SIZE);
-		bytes_read = config->vtable.fread(buff + total_bytes_read, 1, BUF_SIZE, f);
+		bytes_read = config->vtable.fread(buff + total_bytes_read, BUF_SIZE, f);
 		total_bytes_read += bytes_read;
 	} while(bytes_read == BUF_SIZE);
 	
