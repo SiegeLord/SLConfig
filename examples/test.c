@@ -29,7 +29,7 @@ bool test_references()
 {
 	bool ret = true;
 
-	SLCONFIG_NODE* root = slc_create_config(0);
+	SLCONFIG_NODE* root = slc_create_root_node(0);
 	SLCONFIG_NODE* var = slc_add_node(root, slc_from_c_str(""), false, slc_from_c_str("var"), false, false);
 	SLCONFIG_NODE* aggr = slc_add_node(root, slc_from_c_str(""), false, slc_from_c_str("aggr"), false, true);
 	SLCONFIG_NODE* var2 = slc_add_node(aggr, slc_from_c_str(""), false, slc_from_c_str("var"), false, false);
@@ -52,7 +52,7 @@ bool test_saving()
 {
 	bool ret = true;
 	
-	SLCONFIG_NODE* root = slc_create_config(0);
+	SLCONFIG_NODE* root = slc_create_root_node(0);
 	SLCONFIG_NODE* var = slc_add_node(root, slc_from_c_str(":test"), false, slc_from_c_str("var"), false, false);
 	SLCONFIG_NODE* aggr = slc_add_node(root, slc_from_c_str("``:"), false, slc_from_c_str("aggr"), false, true);
 	SLCONFIG_NODE* var2 = slc_add_node(aggr, slc_from_c_str(""), false, slc_from_c_str("/abc"), false, false);
@@ -60,14 +60,15 @@ bool test_saving()
 	slc_set_value(var2, slc_from_c_str("//esc"), false);
 	slc_set_comment(aggr, slc_from_c_str("Test comment\nTest comment"), false);
 	
-	SLCONFIG_STRING str = slc_node_to_string(root, slc_from_c_str("\n"), slc_from_c_str("\t"));
+	SLCONFIG_STRING str = slc_save_node_string(root, slc_from_c_str("\n"), slc_from_c_str("\t"));
 	//printf("%.*s", (int)slc_string_length(str), str.start);
 	
-	SLCONFIG_NODE* root2 = slc_create_config(0);
-	slc_load_config_string(root2, slc_from_c_str(""), str, false);
+	SLCONFIG_NODE* root2 = slc_create_root_node(0);
+	slc_load_nodes_string(root2, slc_from_c_str(""), str, false);
 	
-	SLCONFIG_STRING str2 = slc_node_to_string(root2, slc_from_c_str("\n"), slc_from_c_str("\t"));
+	SLCONFIG_STRING str2 = slc_save_node_string(root2, slc_from_c_str("\n"), slc_from_c_str("\t"));
 	//printf("%.*s", (int)slc_string_length(str2), str2.start);
+	//slc_save_node(root2, slc_from_c_str("save_test.cfg"), slc_from_c_str("\n"), slc_from_c_str("\t"));
 	
 	TEST(slc_string_equal(str, str2));
 	

@@ -447,17 +447,19 @@ EscapedString = '"' ( {Quoted String Chars} | '\' {Printable} )* '"'
 
 ###Node IO:
 
-[slc_create_config](#slc_create_config)
+[slc_create_root_node](#slc_create_root_node)
 
 [slc_add_search_directory](#slc_add_search_directory)
 
 [slc_clear_search_directories](#slc_clear_search_directories)
 
-[slc_load_config](#slc_load_config)
+[slc_load_nodes](#slc_load_nodes)
 
-[slc_load_config_string](#slc_load_config_string)
+[slc_load_nodes_string](#slc_load_nodes_string)
 
-[slc_node_to_string](#slc_node_to_string)
+[slc_save_node](#slc_save_node)
+
+[slc_save_node_string](#slc_save_node_string)
 
 
 ###Node creation/destruction:
@@ -525,11 +527,12 @@ typedef struct
 ```c
 typedef struct
 {
-	void* (*realloc)(void*, size_t);
+	void* (*realloc)(void* buf, size_t size);
 	void (*stderr)(SLCONFIG_STRING s);
 	void* (*fopen)(SLCONFIG_STRING filename, bool read);
-	int (*fclose)(void*);
-	size_t (*fread)(void*, size_t, void*);
+	int (*fclose)(void* file);
+	size_t (*fread)(void* buf, size_t size, void* file);
+	size_t (*fwrite)(const void* buf, size_t size, void* file);
 } SLCONFIG_VTABLE;
 ```
 
@@ -538,9 +541,9 @@ typedef struct
 typedef struct SLCONFIG_NODE SLCONFIG_NODE;
 ```
 
-###slc_create_config
+###slc_create_root_node
 ```c
-SLCONFIG_NODE* slc_create_config(const SLCONFIG_VTABLE* vtable);
+SLCONFIG_NODE* slc_create_root_node(const SLCONFIG_VTABLE* vtable);
 ```
 
 ###slc_add_search_directory
@@ -554,19 +557,25 @@ void slc_add_search_directory(SLCONFIG_NODE* node, SLCONFIG_STRING directory,
 void slc_clear_search_directories(SLCONFIG_NODE* node);
 ```
 
-###slc_load_config
+###slc_load_nodes
 ```c
-bool slc_load_config(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename);
+bool slc_load_nodes(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename);
 ```
 
-###slc_load_config_string
+###slc_load_nodes_string
 ```c
-bool slc_load_config_string(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename,
-                            SLCONFIG_STRING file, bool copy);
+bool slc_load_nodes_string(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename,
+                           SLCONFIG_STRING file, bool copy);
 ```
-###slc_node_to_string
+
+###slc_save_node
 ```c
-SLCONFIG_STRING slc_node_to_string(SLCONFIG_NODE* node, SLCONFIG_STRING line_end,
+bool slc_save_node(SLCONFIG_NODE* node, SLCONFIG_STRING filename, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation);
+```
+
+###slc_save_node_string
+```c
+SLCONFIG_STRING slc_save_node_string(SLCONFIG_NODE* node, SLCONFIG_STRING line_end,
                                    SLCONFIG_STRING indentation);
 ```
 

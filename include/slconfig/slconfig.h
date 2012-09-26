@@ -14,22 +14,24 @@ typedef struct
 
 typedef struct
 {
-	void* (*realloc)(void*, size_t);
+	void* (*realloc)(void* buf, size_t size);
 	void (*stderr)(SLCONFIG_STRING s);
 	void* (*fopen)(SLCONFIG_STRING filename, bool read);
-	int (*fclose)(void*);
-	size_t (*fread)(void*, size_t, void*);
+	int (*fclose)(void* file);
+	size_t (*fread)(void* buf, size_t size, void* file);
+	size_t (*fwrite)(const void* buf, size_t size, void* file);
 } SLCONFIG_VTABLE;
 
 typedef struct SLCONFIG_NODE SLCONFIG_NODE;
 
 /* Node IO */
-SLCONFIG_NODE* slc_create_config(const SLCONFIG_VTABLE* vtable);
+SLCONFIG_NODE* slc_create_root_node(const SLCONFIG_VTABLE* vtable);
 void slc_add_search_directory(SLCONFIG_NODE* node, SLCONFIG_STRING directory, bool copy);
 void slc_clear_search_directories(SLCONFIG_NODE* node);
-bool slc_load_config(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename);
-bool slc_load_config_string(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy);
-SLCONFIG_STRING slc_node_to_string(SLCONFIG_NODE* node, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation);
+bool slc_load_nodes(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename);
+bool slc_load_nodes_string(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy);
+bool slc_save_node(SLCONFIG_NODE* node, SLCONFIG_STRING filename, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation);
+SLCONFIG_STRING slc_save_node_string(SLCONFIG_NODE* node, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation);
 
 /* Node creation/destruction */
 SLCONFIG_NODE* slc_add_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type, bool copy_type, SLCONFIG_STRING name, bool copy_name, bool is_aggregate);

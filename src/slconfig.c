@@ -54,6 +54,12 @@ size_t default_fread(void* buf, size_t size, void* f)
 }
 
 static
+size_t default_fwrite(const void* buf, size_t size, void* f)
+{
+	return fwrite(buf, 1, size, f);
+}
+
+static
 void* default_realloc(void* buf, size_t size)
 {
 	//printf("%p\n", buf);
@@ -66,7 +72,8 @@ SLCONFIG_VTABLE default_vtable =
 	&default_stderr,
 	&default_fopen,
 	&default_fclose,
-	&default_fread
+	&default_fread,
+	&default_fwrite
 };
 
 static
@@ -78,10 +85,11 @@ void fill_vtable(SLCONFIG_VTABLE* vtable)
 	FILL(fopen);
 	FILL(fclose);
 	FILL(fread);
+	FILL(fwrite);
 #undef FILL
 }
 
-SLCONFIG_NODE* slc_create_config(const SLCONFIG_VTABLE* vtable_ptr)
+SLCONFIG_NODE* slc_create_root_node(const SLCONFIG_VTABLE* vtable_ptr)
 {
 	SLCONFIG_VTABLE vtable;
 	if(vtable_ptr)
@@ -151,7 +159,7 @@ bool _slc_load_file(CONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING* f
 	return true;
 }
 
-bool slc_load_config(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename)
+bool slc_load_nodes(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename)
 {
 	assert(aggregate);
 	assert(aggregate->is_aggregate);
@@ -167,7 +175,7 @@ bool slc_load_config(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename)
 	return ret;
 }
 
-bool slc_load_config_string(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy)
+bool slc_load_nodes_string(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy)
 {	
 	assert(aggregate);
 	assert(aggregate->is_aggregate);
@@ -766,7 +774,7 @@ void string_writer(void* output, const void* data, size_t size)
 	slc_append_to_string(writer_data->str, new_str, writer_data->config->vtable.realloc);
 }
 
-SLCONFIG_STRING slc_node_to_string(SLCONFIG_NODE* node, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation)
+SLCONFIG_STRING slc_save_node_string(SLCONFIG_NODE* node, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation)
 {
 	SLCONFIG_STRING ret = {0, 0};
 	
@@ -774,5 +782,22 @@ SLCONFIG_STRING slc_node_to_string(SLCONFIG_NODE* node, SLCONFIG_STRING line_end
 	
 	node_to_string_impl(node, line_end, indentation, &data, &string_writer, 0);
 	
+	return ret;
+}
+
+bool slc_save_node(SLCONFIG_NODE* node, SLCONFIG_STRING filename, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation)
+{
+	bool ret = false;
+	SLCONFIG_VTABLE vtable = node->config->vtable;
+	SLCONFIG_STRING str = slc_save_node_string(node, line_end, indentation);
+	void* file = vtable.fopen(filename, false);
+	if(file)
+	{
+		size_t len = slc_string_length(str);
+		size_t written_len = vtable.fwrite(str.start, len, file);
+		ret = len == written_len;
+		fclose(file);
+	}
+	slc_destroy_string(&str, vtable.realloc);
 	return ret;
 }
