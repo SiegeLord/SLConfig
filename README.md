@@ -365,7 +365,73 @@ Here is a [GOLD parser](http://www.goldparser.org) compatible syntax for SLConfi
 language with a notable exception of heredocs.
 
 ```
+Comment Line = '//'
+Comment Start = '/*'
+Comment End = '*/'
+Comment Block @= { Nesting = All, Advance = Character}
 
+"Start Symbol" = <AggregateContents>
+
+! -------------------------------------------------
+! Character Sets
+! -------------------------------------------------
+
+{Quoted String Chars} = {All Valid} - ["\]
+{Naked String Chars} = {All Valid} - {Whitespace} - [=#~{}$:;"]
+{Naked String Start} = {Naked String Chars} - [/*]
+
+! -------------------------------------------------
+! Terminals
+! -------------------------------------------------
+
+NakedString = {Naked String Chars}
+            | {Naked String Chars}? {Naked String Start} {Naked String Chars}*
+QuotedString = '"' ( {Quoted String Chars} | '\' {Printable} )* '"'
+
+! -------------------------------------------------
+! Rules
+! -------------------------------------------------
+
+! Aggregates
+<AggregateContents> ::= <Statements>
+                     |
+
+<Statements> ::= <Statement> | <Statements> <Statement>
+
+! Expressions
+<String> ::= QuotedString | NakedString
+
+<Reference> ::= <String>
+             | '::' <String>
+             |  <Reference> ':' <String>
+
+<Expand> ::= '$' <Reference>
+
+<StringSource> ::= <Reference> | <Expand>
+
+<RValue> ::= <StringSource>
+          |  <RValue> <StringSource>
+
+<LValue> ::= <Reference>
+          |  <String> <String>
+
+! Statements
+<NodeStatement> ::= <LValue> ';'
+                 |  <LValue> '=' <RValue> ';'
+                 |  <LValue> '{' <AggregateContents> '}'
+
+
+<DestroyStatement> ::= '~' <Reference> ';'
+
+<IncludeStatement> ::= '#include' <String> ';'
+
+<ExpandStatement> ::= <Expand> ';'
+
+<Statement> ::= <NodeStatement>
+             |  <DestroyStatement>
+             |  <IncludeStatement>
+             |  <ExpandStatement>
+             |  ';'
 ```
 
 ## User API
