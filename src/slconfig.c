@@ -19,6 +19,7 @@
 #include "slconfig/slconfig.h"
 #include "slconfig/internal/slconfig.h"
 #include "slconfig/internal/parser.h"
+#include "slconfig/internal/tokenizer.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -32,13 +33,11 @@ void default_stderr(SLCONFIG_STRING s)
 }
 
 static
-void* default_fopen(SLCONFIG_STRING filename, SLCONFIG_STRING mode)
+void* default_fopen(SLCONFIG_STRING filename, bool read)
 {
 	char* filename_str = slc_to_c_str(filename);
-	char* mode_str = slc_to_c_str(mode);
-	void* ret = fopen(filename_str, mode_str);
+	void* ret = fopen(filename_str, read ? "rb" : "wb");
 	free(filename_str);
-	free(mode_str);
 	return ret;
 }
 
@@ -118,7 +117,7 @@ bool _slc_load_file(CONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING* f
 	size_t total_bytes_read = 0;
 	size_t bytes_read;
 	char* buff = 0;
-	void* f = config->vtable.fopen(filename, slc_from_c_str("rb"));
+	void* f = config->vtable.fopen(filename, true);
 	if(!f)
 	{
 		for(size_t ii = 0; ii < config->num_search_dirs && !f; ii++)
@@ -128,7 +127,7 @@ bool _slc_load_file(CONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING* f
 			slc_append_to_string(&test_file, slc_from_c_str("/"), config->vtable.realloc);
 			slc_append_to_string(&test_file, filename, config->vtable.realloc);
 			
-			f = config->vtable.fopen(test_file, slc_from_c_str("rb"));
+			f = config->vtable.fopen(test_file, true);
 			slc_destroy_string(&test_file, config->vtable.realloc);
 		}
 		
@@ -158,7 +157,7 @@ bool slc_load_config(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename)
 	assert(aggregate->is_aggregate);
 	if(!aggregate->is_aggregate)
 		return false;
-	CONFIG = aggregate->config;
+	CONFIG* config = aggregate->config;
 	_slc_add_include(config, filename, false, 0);
 	SLCONFIG_STRING file = {0, 0};
 	bool ret = _slc_load_file(config, filename, &file);
@@ -174,7 +173,7 @@ bool slc_load_config_string(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename, 
 	assert(aggregate->is_aggregate);
 	if(!aggregate->is_aggregate)
 		return false;
-	CONFIG = aggregate->config;
+	CONFIG* config = aggregate->config;
 	SLCONFIG_STRING new_file = {0, 0};
 	if(copy)
 	{
@@ -604,4 +603,152 @@ void slc_clear_search_directories(SLCONFIG_NODE* node)
 	config->search_dirs = 0;
 	config->search_dir_ownerships = 0;
 	config->num_search_dirs = 0;
+}
+
+#define SENTINEL_CHAR ('`')
+#define SENTINEL_STRING ("`")
+
+static
+size_t get_sentinel_size(SLCONFIG_STRING string)
+{
+	if(string.start == 0)
+		return 0;
+	
+	bool need_escaping = false;
+	bool first_was_slash = false;
+
+	size_t idx = 0;
+	size_t ret = 0;
+	while(string.start < string.end)
+	{
+		if(*string.start == SENTINEL_CHAR)
+			ret++;
+		else
+			ret = 0;
+		
+		if(!_slc_is_naked_string_character(*string.start))
+			need_escaping = true;
+		
+		if(idx == 0 && *string.start == '/')
+			first_was_slash = true;
+		else if(first_was_slash && idx == 1 && *string.start == '/')
+			need_escaping = true;
+		
+		idx++;
+		string.start++;
+	}
+
+	if(need_escaping)
+		return ret + 1;
+	else
+		return 0;
+}
+
+static
+void node_to_string_impl(SLCONFIG_NODE* node, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation, void* output, void (*writer)(void* output, const void* data, size_t size),  size_t indent_level)
+{
+	SLCONFIG_STRING sentinel_string = {SENTINEL_STRING, SENTINEL_STRING + 1};
+	
+	#define WRITE_C_STRING(s) writer(output, s, strlen(s));
+	#define WRITE_STRING(s) writer(output, s.start, slc_string_length(s));
+	#define REPEAT(s, n) for(size_t _ii = 0; _ii < (n); _ii++) { WRITE_STRING(s); }
+	#define INDENT REPEAT(indentation, indent_level);
+	#define ESCAPED_STRING(s)                                                  \
+	do                                                                         \
+	{                                                                          \
+		size_t sentinel_size = get_sentinel_size(s);                           \
+		if(sentinel_size > 0)                                                  \
+		{                                                                      \
+			REPEAT(sentinel_string, sentinel_size);                            \
+			WRITE_C_STRING("\"");                                              \
+			WRITE_STRING(s);                                                   \
+			WRITE_C_STRING("\"");                                              \
+			REPEAT(sentinel_string, sentinel_size);                            \
+		}                                                                      \
+		else                                                                   \
+		{                                                                      \
+			WRITE_STRING(s);                                                   \
+		}                                                                      \
+	} while(0)
+	
+	if(slc_string_length(node->comment))
+	{
+		INDENT;
+		WRITE_C_STRING("/**");
+		WRITE_STRING(node->comment);
+		WRITE_C_STRING("*/");
+	}
+	
+	INDENT;
+	if(slc_string_length(node->type) > 0)
+	{
+		ESCAPED_STRING(node->type);
+		WRITE_C_STRING(" ");
+	}
+	ESCAPED_STRING(node->name);
+	
+	if(node->is_aggregate)
+	{
+		if(!node->parent)
+		{
+			for(size_t ii = 0; ii < node->num_children; ii++)
+			{
+				node_to_string_impl(node->children[ii], line_end, indentation, output, writer, indent_level);
+			}
+		}
+		else if(node->num_children > 0)
+		{
+			WRITE_STRING(line_end);
+			INDENT;
+			WRITE_C_STRING("{");
+			WRITE_STRING(line_end);
+			for(size_t ii = 0; ii < node->num_children; ii++)
+			{
+				node_to_string_impl(node->children[ii], line_end, indentation, output, writer, indent_level+1);
+			}
+			INDENT;
+			WRITE_C_STRING("}");
+		}
+		else
+		{
+			WRITE_C_STRING(" {}");
+		}
+	}
+	else
+	{
+		if(slc_string_length(node->value))
+		{
+			WRITE_C_STRING(" = ");
+			ESCAPED_STRING(node->value);
+		}
+		WRITE_C_STRING(";");
+	}
+	
+	if(node->parent)
+		WRITE_STRING(line_end);
+}
+
+typedef struct
+{
+	SLCONFIG_STRING* str;
+	CONFIG* config;
+} WRITER_DATA;
+
+static
+void string_writer(void* output, const void* data, size_t size)
+{
+	WRITER_DATA* writer_data = (WRITER_DATA*)output;
+	SLCONFIG_STRING new_str = {data, data + size};
+	slc_append_to_string(writer_data->str, new_str, writer_data->config->vtable.realloc);
+}
+
+SLCONFIG_STRING slc_node_to_string(SLCONFIG_NODE* node, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation)
+{
+	SLCONFIG_STRING ret = {0, 0};
+	
+	WRITER_DATA data = {&ret, node->config};
+	
+	node_to_string_impl(node, line_end, indentation, &data, &string_writer, 0);
+	
+	return ret;
 }

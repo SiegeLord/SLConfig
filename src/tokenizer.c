@@ -34,8 +34,7 @@ bool is_newline(char c)
 	return c == CR || c == LF;
 }
 
-static
-bool is_naked_string_character(char c)
+bool _slc_is_naked_string_character(char c)
 {
 	return !is_whitespace(c) && !is_newline(c) &&
 	       c != ':' && c != '$' && c != '{' && c != '~' &&
@@ -193,7 +192,7 @@ bool token_string(SLCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 			
 			if(slc_string_equal(pre_quote, post_quote))
 			{
-				/*if(is_naked_string_character(*str->start))
+				/*if(_slc_is_naked_string_character(*str->start))
 				{
 					_slc_print_error_prefix(state->config, state->filename, state->line, state->vtable);
 					state->vtable->stderr(slc_from_c_str("Error: Unexpected character '"));
@@ -224,7 +223,7 @@ bool token_string(SLCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 			}
 		}
 		
-		if(!first_quote && !is_naked_string_character(*str->start))
+		if(!first_quote && !_slc_is_naked_string_character(*str->start))
 		{
 			pre_quote.end = str->start;
 			goto exit;

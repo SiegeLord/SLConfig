@@ -15,7 +15,7 @@ typedef struct
 {
 	void* (*realloc)(void*, size_t);
 	void (*stderr)(SLCONFIG_STRING s);
-	void* (*fopen)(SLCONFIG_STRING filename, SLCONFIG_STRING mode);
+	void* (*fopen)(SLCONFIG_STRING filename, bool read);
 	int (*fclose)(void*);
 	size_t (*fread)(void*, size_t, size_t, void*);
 } SLCONFIG_VTABLE;
@@ -54,5 +54,7 @@ SLCONFIG_STRING slc_get_value(SLCONFIG_NODE* node);
 SLCONFIG_STRING slc_get_comment(SLCONFIG_NODE* node);
 
 void slc_destroy_node(SLCONFIG_NODE* node);
+
+SLCONFIG_STRING slc_node_to_string(SLCONFIG_NODE* node, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation);
 
 #endif

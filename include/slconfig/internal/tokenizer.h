@@ -46,5 +46,6 @@ typedef struct
 } TOKENIZER_STATE;
 
 TOKEN _slc_get_next_token(TOKENIZER_STATE* state);
+bool _slc_is_naked_string_character(char c);
 
 #endif
