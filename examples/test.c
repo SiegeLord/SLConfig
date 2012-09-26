@@ -54,7 +54,7 @@ bool test_saving()
 	
 	SLCONFIG_NODE* root = slc_create_root_node(0);
 	SLCONFIG_NODE* var = slc_add_node(root, slc_from_c_str(":test"), false, slc_from_c_str("var"), false, false);
-	SLCONFIG_NODE* aggr = slc_add_node(root, slc_from_c_str("``:"), false, slc_from_c_str("aggr"), false, true);
+	SLCONFIG_NODE* aggr = slc_add_node(root, slc_from_c_str("\"--:"), false, slc_from_c_str("aggr"), false, true);
 	SLCONFIG_NODE* var2 = slc_add_node(aggr, slc_from_c_str(""), false, slc_from_c_str("/abc"), false, false);
 	slc_set_value(var, slc_from_c_str("3.15"), false);
 	slc_set_value(var2, slc_from_c_str("//esc"), false);

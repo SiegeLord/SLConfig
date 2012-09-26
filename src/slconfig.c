@@ -636,8 +636,8 @@ void slc_clear_search_directories(SLCONFIG_NODE* node)
 	config->num_search_dirs = 0;
 }
 
-#define SENTINEL_CHAR ('`')
-#define SENTINEL_STRING ("`")
+#define SENTINEL_CHAR ('-')
+#define SENTINEL_STRING ("-")
 
 static
 size_t get_sentinel_size(SLCONFIG_STRING string)
@@ -650,12 +650,16 @@ size_t get_sentinel_size(SLCONFIG_STRING string)
 
 	size_t idx = 0;
 	size_t ret = 0;
+	size_t max_ret = 0;
 	while(string.start < string.end)
 	{
 		if(*string.start == SENTINEL_CHAR)
 			ret++;
 		else
 			ret = 0;
+		
+		if(ret > max_ret)
+			max_ret = ret;
 		
 		if(!_slc_is_naked_string_character(*string.start))
 			need_escaping = true;
@@ -670,7 +674,7 @@ size_t get_sentinel_size(SLCONFIG_STRING string)
 	}
 
 	if(need_escaping)
-		return ret + 1;
+		return max_ret + 1;
 	else
 		return 0;
 }
