@@ -58,6 +58,7 @@ bool test_saving()
 	SLCONFIG_NODE* var2 = slc_add_node(aggr, slc_from_c_str(""), false, slc_from_c_str("/abc"), false, false);
 	slc_set_value(var, slc_from_c_str("3.15"), false);
 	slc_set_value(var2, slc_from_c_str("//esc"), false);
+	slc_set_comment(aggr, slc_from_c_str("Test comment\nTest comment"), false);
 	
 	SLCONFIG_STRING str = slc_node_to_string(root, slc_from_c_str("\n"), slc_from_c_str("\t"));
 	//printf("%.*s", (int)slc_string_length(str), str.start);

@@ -392,37 +392,54 @@ SLCONFIG_STRING slc_get_full_name(SLCONFIG_NODE* node)
 	return ret;
 }
 
-bool slc_set_value(SLCONFIG_NODE* node, SLCONFIG_STRING value, bool copy)
+bool slc_set_value(SLCONFIG_NODE* string_node, SLCONFIG_STRING value, bool copy)
 {
-	assert(node);
-	if(node->is_aggregate)
+	assert(string_node);
+	if(string_node->is_aggregate)
 		return false;
-	if(node->own_value)
-		slc_destroy_string(&node->value, node->config->vtable.realloc);
+	if(string_node->own_value)
+		slc_destroy_string(&string_node->value, string_node->config->vtable.realloc);
 	if(copy)
 	{
-		node->value.start = node->value.end = 0;
-		slc_append_to_string(&node->value, value, node->config->vtable.realloc);
+		string_node->value.start = string_node->value.end = 0;
+		slc_append_to_string(&string_node->value, value, string_node->config->vtable.realloc);
 	}
 	else
 	{
-		node->value = value;
+		string_node->value = value;
 	}
-	node->own_value = copy;
+	string_node->own_value = copy;
 	return true;
 }
 
-SLCONFIG_STRING slc_get_value(SLCONFIG_NODE* node)
+void slc_set_comment(SLCONFIG_NODE* node, SLCONFIG_STRING comment, bool copy)
 {
 	assert(node);
-	if(node->is_aggregate)
+	if(node->own_comment)
+		slc_destroy_string(&node->comment, node->config->vtable.realloc);
+	if(copy)
+	{
+		node->comment.start = node->comment.end = 0;
+		slc_append_to_string(&node->comment, comment, node->config->vtable.realloc);
+	}
+	else
+	{
+		node->comment = comment;
+	}
+	node->own_comment = copy;
+}
+
+SLCONFIG_STRING slc_get_value(SLCONFIG_NODE* string_node)
+{
+	assert(string_node);
+	if(string_node->is_aggregate)
 	{
 		SLCONFIG_STRING ret = {0, 0};
 		return ret;
 	}
 	else
 	{
-		return node->value;
+		return string_node->value;
 	}
 }
 
@@ -671,12 +688,13 @@ void node_to_string_impl(SLCONFIG_NODE* node, SLCONFIG_STRING line_end, SLCONFIG
 		}                                                                      \
 	} while(0)
 	
-	if(slc_string_length(node->comment))
+	if(node->parent && slc_string_length(node->comment))
 	{
 		INDENT;
 		WRITE_C_STRING("/**");
 		WRITE_STRING(node->comment);
 		WRITE_C_STRING("*/");
+		WRITE_STRING(line_end);
 	}
 	
 	INDENT;

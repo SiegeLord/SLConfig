@@ -42,7 +42,7 @@ SLCONFIG_STRING slc_get_full_name(SLCONFIG_NODE* node);
 SLCONFIG_NODE* slc_add_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type, bool copy_type, SLCONFIG_STRING name, bool copy_name, bool is_aggregate);
 SLCONFIG_NODE* slc_get_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING name);
 
-bool slc_set_value(SLCONFIG_NODE* node, SLCONFIG_STRING value, bool copy);
+bool slc_set_value(SLCONFIG_NODE* node, SLCONFIG_STRING string_node, bool copy);
 void slc_set_user_data(SLCONFIG_NODE* node, intptr_t data, void (*user_destructor)(intptr_t));
 size_t slc_get_num_children(SLCONFIG_NODE* node);
 SLCONFIG_NODE* slc_get_node_by_index(SLCONFIG_NODE* aggregate, size_t idx);
@@ -50,8 +50,9 @@ SLCONFIG_NODE* slc_get_node_by_reference(SLCONFIG_NODE* aggregate, SLCONFIG_STRI
 SLCONFIG_STRING slc_get_name(SLCONFIG_NODE* node);
 SLCONFIG_STRING slc_get_type(SLCONFIG_NODE* node);
 bool slc_is_aggregate(SLCONFIG_NODE* node);
-SLCONFIG_STRING slc_get_value(SLCONFIG_NODE* node);
+SLCONFIG_STRING slc_get_value(SLCONFIG_NODE* string_node);
 SLCONFIG_STRING slc_get_comment(SLCONFIG_NODE* node);
+void slc_set_comment(SLCONFIG_NODE* node, SLCONFIG_STRING comment, bool copy);
 
 void slc_destroy_node(SLCONFIG_NODE* node);
 

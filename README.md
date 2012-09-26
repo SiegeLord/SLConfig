@@ -541,7 +541,7 @@ SLCONFIG_NODE* slc_get_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING name);
 
 ###slc_set_value
 ```c
-bool slc_set_value(SLCONFIG_NODE* node, SLCONFIG_STRING value, bool copy);
+bool slc_set_value(SLCONFIG_NODE* string_node, SLCONFIG_STRING value, bool copy);
 ```
 
 ###slc_set_user_data
@@ -582,7 +582,7 @@ bool slc_is_aggregate(SLCONFIG_NODE* node);
 
 ###slc_get_value
 ```c
-SLCONFIG_STRING slc_get_value(SLCONFIG_NODE* node);
+SLCONFIG_STRING slc_get_value(SLCONFIG_NODE* string_node);
 ```
 
 ###slc_get_comment
