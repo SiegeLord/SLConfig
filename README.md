@@ -386,7 +386,7 @@ Comment Block @= { Nesting = All, Advance = Character}
 
 NakedString = {Naked String Chars}
             | {Naked String Chars}? {Naked String Start} {Naked String Chars}*
-QuotedString = '"' ( {Quoted String Chars} | '\' {Printable} )* '"'
+EscapedString = '"' ( {Quoted String Chars} | '\' {Printable} )* '"'
 
 ! -------------------------------------------------
 ! Rules
@@ -399,7 +399,7 @@ QuotedString = '"' ( {Quoted String Chars} | '\' {Printable} )* '"'
 <Statements> ::= <Statement> | <Statements> <Statement>
 
 ! Expressions
-<String> ::= QuotedString | NakedString
+<String> ::= EscapedString | NakedString
 
 <Reference> ::= <String>
              | '::' <String>
