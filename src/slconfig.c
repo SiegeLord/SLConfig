@@ -582,6 +582,12 @@ void slc_set_user_data(SLCONFIG_NODE* node, intptr_t data, void (*user_destructo
 	node->user_destructor = user_destructor;
 }
 
+intptr_t slc_get_user_data(SLCONFIG_NODE* node)
+{
+	assert(node);
+	return node->user_data;
+}
+
 void slc_add_search_directory(SLCONFIG_NODE* node, SLCONFIG_STRING directory, bool copy)
 {
 	assert(node);

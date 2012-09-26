@@ -436,6 +436,82 @@ EscapedString = '"' ( {Quoted String Chars} | '\' {Printable} )* '"'
 
 ## User API
 
+###Types:
+
+[SLCONFIG_STRING](#slconfig_string)
+
+[SLCONFIG_VTABLE](#slconfig_vtable)
+
+[SLCONFIG_NODE](#slconfig_node)
+
+
+###Node IO:
+
+[slc_create_config](#slc_create_config)
+
+[slc_add_search_directory](#slc_add_search_directory)
+
+[slc_clear_search_directories](#slc_clear_search_directories)
+
+[slc_load_config](#slc_load_config)
+
+[slc_load_config_string](#slc_load_config_string)
+
+[slc_node_to_string](#slc_node_to_string)
+
+
+###Node creation/destruction:
+
+[slc_add_node](#slc_add_node)
+
+[slc_destroy_node](#slc_destroy_node)
+
+###Node access:
+
+[slc_get_node](#slc_get_node)
+
+[slc_get_node_by_index](#slc_get_node_by_index)
+
+[slc_get_node_by_reference](#slc_get_node_by_reference)
+
+###Node properties:
+
+[slc_get_name](#slc_get_name)
+
+[slc_get_type](#slc_get_type)
+
+[slc_get_full_name](#slc_get_full_name)
+
+[slc_is_aggregate](#slc_is_aggregate)
+
+[slc_get_num_children](#slc_get_num_children)
+
+[slc_get_value](#slc_get_value)
+
+[slc_set_value](#slc_set_value)
+
+[slc_get_user_data](#slc_get_user_data)
+
+[slc_set_user_data](#slc_set_user_data)
+
+[slc_get_comment](#slc_get_comment)
+
+[slc_set_comment](#slc_set_comment)
+
+###String handling:
+
+[slc_string_length](#slc_string_length)
+
+[slc_string_equal](#slc_string_equal)
+
+[slc_from_c_str](#slc_from_c_str)
+
+[slc_to_c_str](#slc_to_c_str)
+
+[slc_append_to_string](#slc_append_to_string)
+
+[slc_destroy_string](#slc_destroy_string)
+
 ###SLCONFIG_STRING
 ```c
 typedef struct
@@ -455,38 +531,6 @@ typedef struct
 	int (*fclose)(void*);
 	size_t (*fread)(void*, size_t, size_t, void*);
 } SLCONFIG_VTABLE;
-```
-
-###slc_string_length
-```c
-size_t slc_string_length(SLCONFIG_STRING str);
-```
-
-###slc_string_equal
-```c
-bool slc_string_equal(SLCONFIG_STRING a, SLCONFIG_STRING b);
-```
-
-###slc_from_c_str
-```c
-SLCONFIG_STRING slc_from_c_str(const char* str);
-```
-
-###slc_to_c_str
-```c
-char* slc_to_c_str(SLCONFIG_STRING str);
-```
-
-###slc_append_to_string
-```c
-void slc_append_to_string(SLCONFIG_STRING* dest, SLCONFIG_STRING new_str, 
-                          void* (*custom_realloc)(void*, size_t));
-```
-
-###slc_destroy_string
-```c
-void slc_destroy_string(SLCONFIG_STRING* str,
-                        void* (*custom_realloc)(void*, size_t));
 ```
 
 ###SLCONFIG_NODE
@@ -520,11 +564,9 @@ bool slc_load_config(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename);
 bool slc_load_config_string(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename,
                             SLCONFIG_STRING file, bool copy);
 ```
-
-
-###slc_get_full_name
+###slc_node_to_string
 ```c
-SLCONFIG_STRING slc_get_full_name(SLCONFIG_NODE* node);
+SLCONFIG_STRING slc_node_to_string(SLCONFIG_NODE* node, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation);
 ```
 
 ###slc_add_node
@@ -534,25 +576,14 @@ SLCONFIG_NODE* slc_add_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type,
                             bool copy_name, bool is_aggregate);
 ```
 
+###slc_destroy_node
+```c
+void slc_destroy_node(SLCONFIG_NODE* node);
+```
+
 ###slc_get_node
 ```c
 SLCONFIG_NODE* slc_get_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING name);
-```
-
-###slc_set_value
-```c
-bool slc_set_value(SLCONFIG_NODE* string_node, SLCONFIG_STRING value, bool copy);
-```
-
-###slc_set_user_data
-```c
-void slc_set_user_data(SLCONFIG_NODE* node, intptr_t data,
-                       void (*user_destructor)(intptr_t));
-```
-
-###slc_get_num_children
-```c
-size_t slc_get_num_children(SLCONFIG_NODE* node);
 ```
 
 ###slc_get_node_by_index
@@ -570,6 +601,11 @@ SLCONFIG_NODE* slc_get_node_by_reference(SLCONFIG_NODE* aggregate, SLCONFIG_STRI
 SLCONFIG_STRING slc_get_name(SLCONFIG_NODE* node);
 ```
 
+###slc_get_full_name
+```c
+SLCONFIG_STRING slc_get_full_name(SLCONFIG_NODE* node);
+```
+
 ###slc_get_type
 ```c
 SLCONFIG_STRING slc_get_type(SLCONFIG_NODE* node);
@@ -580,9 +616,30 @@ SLCONFIG_STRING slc_get_type(SLCONFIG_NODE* node);
 bool slc_is_aggregate(SLCONFIG_NODE* node);
 ```
 
+###slc_get_num_children
+```c
+size_t slc_get_num_children(SLCONFIG_NODE* node);
+```
+
 ###slc_get_value
 ```c
 SLCONFIG_STRING slc_get_value(SLCONFIG_NODE* string_node);
+```
+
+###slc_set_value
+```c
+bool slc_set_value(SLCONFIG_NODE* string_node, SLCONFIG_STRING value, bool copy);
+```
+
+###slc_get_user_data
+```c
+intptr_t slc_get_user_data(SLCONFIG_NODE* node);
+```
+
+###slc_set_user_data
+```c
+void slc_set_user_data(SLCONFIG_NODE* node, intptr_t data,
+                       void (*user_destructor)(intptr_t));
 ```
 
 ###slc_get_comment
@@ -590,14 +647,41 @@ SLCONFIG_STRING slc_get_value(SLCONFIG_NODE* string_node);
 SLCONFIG_STRING slc_get_comment(SLCONFIG_NODE* node);
 ```
 
-###slc_destroy_node
+###slc_set_comment
 ```c
-void slc_destroy_node(SLCONFIG_NODE* node);
+void slc_set_comment(SLCONFIG_NODE* node, SLCONFIG_STRING comment, bool copy);
 ```
 
-###slc_node_to_string
+###slc_string_length
 ```c
-SLCONFIG_STRING slc_node_to_string(SLCONFIG_NODE* node, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation);
+size_t slc_string_length(SLCONFIG_STRING str);
+```
+
+###slc_string_equal
+```c
+bool slc_string_equal(SLCONFIG_STRING a, SLCONFIG_STRING b);
+```
+
+###slc_from_c_str
+```c
+SLCONFIG_STRING slc_from_c_str(const char* str);
+```
+
+###slc_to_c_str
+```c
+char* slc_to_c_str(SLCONFIG_STRING str);
+```
+
+###slc_append_to_string
+```c
+void slc_append_to_string(SLCONFIG_STRING* dest, SLCONFIG_STRING new_str, 
+                          void* (*custom_realloc)(void*, size_t));
+```
+
+###slc_destroy_string
+```c
+void slc_destroy_string(SLCONFIG_STRING* str,
+                        void* (*custom_realloc)(void*, size_t));
 ```
 
 ## License
