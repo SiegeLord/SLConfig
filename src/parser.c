@@ -807,7 +807,7 @@ SLCONFIG_NODE* slc_get_node_by_reference(SLCONFIG_NODE* aggregate, SLCONFIG_STRI
 	state.vtable = &aggregate->config->vtable;
 	state.str = reference;
 	state.config = aggregate->config;
-	state.gag_errors = false;
+	state.gag_errors = true;
 	
 	SLCONFIG_NODE* ret = 0;
 	
