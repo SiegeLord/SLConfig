@@ -523,7 +523,7 @@ typedef struct
 } SLCONFIG_STRING;
 ```
 
-A string type used by the SLConfig library. C strings were not use to minimize 
+A string type used by the SLConfig library. C strings were not used to minimize 
 unnecessary memory allocations for the zero byte. All strings 
 returned by the API should be treated as immutable.
 
