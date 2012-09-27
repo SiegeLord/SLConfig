@@ -493,7 +493,7 @@ size_t slc_get_num_children(SLCONFIG_NODE* node)
 	if(node->is_aggregate)
 		return node->num_children;
 	else
-		return NULL;
+		return 0;
 }
 
 void _slc_copy_into(SLCONFIG_NODE* dest, SLCONFIG_NODE* src)
@@ -680,7 +680,7 @@ size_t get_sentinel_size(SLCONFIG_STRING string)
 }
 
 static
-void node_to_string_impl(SLCONFIG_NODE* node, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation, void* output, void (*writer)(void* output, const void* data, size_t size),  size_t indent_level)
+void node_writer(SLCONFIG_NODE* node, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation, void* output, void (*writer)(void* output, const void* data, size_t size),  size_t indent_level)
 {
 	SLCONFIG_STRING sentinel_string = {SENTINEL_STRING, SENTINEL_STRING + 1};
 	
@@ -729,7 +729,7 @@ void node_to_string_impl(SLCONFIG_NODE* node, SLCONFIG_STRING line_end, SLCONFIG
 		{
 			for(size_t ii = 0; ii < node->num_children; ii++)
 			{
-				node_to_string_impl(node->children[ii], line_end, indentation, output, writer, indent_level);
+				node_writer(node->children[ii], line_end, indentation, output, writer, indent_level);
 			}
 		}
 		else if(node->num_children > 0)
@@ -740,7 +740,7 @@ void node_to_string_impl(SLCONFIG_NODE* node, SLCONFIG_STRING line_end, SLCONFIG
 			WRITE_STRING(line_end);
 			for(size_t ii = 0; ii < node->num_children; ii++)
 			{
-				node_to_string_impl(node->children[ii], line_end, indentation, output, writer, indent_level+1);
+				node_writer(node->children[ii], line_end, indentation, output, writer, indent_level+1);
 			}
 			INDENT;
 			WRITE_C_STRING("}");
@@ -768,12 +768,12 @@ typedef struct
 {
 	SLCONFIG_STRING* str;
 	CONFIG* config;
-} WRITER_DATA;
+} STRING_WRITER_DATA;
 
 static
 void string_writer(void* output, const void* data, size_t size)
 {
-	WRITER_DATA* writer_data = (WRITER_DATA*)output;
+	STRING_WRITER_DATA* writer_data = (STRING_WRITER_DATA*)output;
 	SLCONFIG_STRING new_str = {data, data + size};
 	slc_append_to_string(writer_data->str, new_str, writer_data->config->vtable.realloc);
 }
@@ -782,26 +782,38 @@ SLCONFIG_STRING slc_save_node_string(SLCONFIG_NODE* node, SLCONFIG_STRING line_e
 {
 	SLCONFIG_STRING ret = {0, 0};
 	
-	WRITER_DATA data = {&ret, node->config};
+	STRING_WRITER_DATA data = {&ret, node->config};
 	
-	node_to_string_impl(node, line_end, indentation, &data, &string_writer, 0);
+	node_writer(node, line_end, indentation, &data, &string_writer, 0);
 	
 	return ret;
+}
+
+typedef struct
+{
+	void* output;
+	CONFIG* config;
+	bool error;
+} FILE_WRITER_DATA;
+
+static
+void file_writer(void* output, const void* data, size_t size)
+{
+	FILE_WRITER_DATA* writer_data = (FILE_WRITER_DATA*)output;
+	writer_data->error |= size != writer_data->config->vtable.fwrite(data, size, writer_data->output);
 }
 
 bool slc_save_node(SLCONFIG_NODE* node, SLCONFIG_STRING filename, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation)
 {
 	bool ret = false;
 	SLCONFIG_VTABLE vtable = node->config->vtable;
-	SLCONFIG_STRING str = slc_save_node_string(node, line_end, indentation);
 	void* file = vtable.fopen(filename, false);
 	if(file)
 	{
-		size_t len = slc_string_length(str);
-		size_t written_len = vtable.fwrite(str.start, len, file);
-		ret = len == written_len;
-		fclose(file);
+		FILE_WRITER_DATA data = {file, node->config, false};
+		node_writer(node, line_end, indentation, &data, &file_writer, 0);
+		ret = !data.error;
+		vtable.fclose(file);
 	}
-	slc_destroy_string(&str, vtable.realloc);
 	return ret;
 }
