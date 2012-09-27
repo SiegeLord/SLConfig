@@ -78,11 +78,10 @@ Run `make` to build the library and examples.
 
 An SLConfig file is a tree of nodes. There are two types of nodes: aggregate 
 nodes and string nodes. Aggregate nodes can have zero or more children, while 
-string nodes have a string value. All nodes regardless of type have a user 
-defined static type and a name. Nodes inside a SLConfig file are all children 
-of a root aggregate node which has no name or type. Here are some examples of 
-string nodes:
-
+string nodes have a string value. The order of children is important.
+All nodes regardless of type have a user defined static type and a name. Nodes
+inside a SLConfig file are all children of a root aggregate node which has no
+name or type. Here are some examples of string nodes:
 ```
 string_node_no_type;
 typename string_node;
@@ -288,8 +287,8 @@ Escaped strings are sequences of characters between double quotes. Double
 quotes can be inserted into escaped quotes by escaping them with the backslash 
 ('\'). Most escaped codes from the C are also supported. Unknown escape codes 
 are passed as is (e.g. "\8" becomes "8"). Newline characters are 
-accepted, but are parsed as is, so you must be mindful of what style of line 
-endings you use. Here are some examples of escaped strings, again defining 
+accepted, but are parsed as is, so note must be taken of what style of line 
+endings are used. Here are some examples of escaped strings, again defining 
 string nodes (it is perfectly valid to use any type of string for any usage of 
 string that has been shown so far):
 
@@ -560,8 +559,8 @@ _Fields_:
     }
 ```
 
-* _stderr_ - Error output. You should make a copy of the passed string if you 
-want to hold on to it for longer than the duration of the call.
+* _stderr_ - Error output. A copy of the passed string should be made if it is
+retained for longer than the duration of the call.
 
 ```c
     void default_stderr(SLCONFIG_STRING s)
@@ -630,21 +629,56 @@ _Arguments_:
 
 * _vtable_ - vtable to use for all future operations.
 
+_Returns_:
+
+Newly created root node, or `NULL` if there is an error.
+
 ###slc_add_search_directory
 ```c
 void slc_add_search_directory(SLCONFIG_NODE* node, SLCONFIG_STRING directory,
                               bool copy);
 ```
 
+Adds a directory to search when loading files. This is used for both `#include` 
+statements and the loading functions. Directories are searched in order of their 
+addition with the current directory always being searched first. All directories
+are shared between all nodes in the tree.
+
+_Arguments_:
+
+* _node_ - any node in the tree
+* _directory_ - the directory to search
+* _copy_ - whether to make a copy of the directory string or just reference it
+
 ###slc_clear_search_directories
 ```c
 void slc_clear_search_directories(SLCONFIG_NODE* node);
 ```
 
+Erase all the search directories used by the tree.
+
+_Arguments_:
+
+* _node_ - any node in the tree
+
 ###slc_load_nodes
 ```c
 bool slc_load_nodes(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename);
 ```
+
+Opens a file, parses all of the nodes inside it and inserts them into the 
+aggregate.
+
+_Arguments_:
+
+* _aggregate_ - an aggregate node
+* _filename_ - path to the file
+
+_Returns_:
+
+`true` if the file was loaded successfully, `false` if there was an error. 
+Possible errors include `aggregate` not being an aggregate, there being syntax 
+errors in the file, or the file not being found.
 
 ###slc_load_nodes_string
 ```c
@@ -652,17 +686,66 @@ bool slc_load_nodes_string(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename,
                            SLCONFIG_STRING file, bool copy);
 ```
 
+Like [slc_load_nodes](#slc_load_nodes) but with a passed string instead of an 
+external file. Note that the function may still perform file operations if the 
+passed string has `#include` statements.
+
+_Arguments_:
+
+* _aggregate_ - an aggregate node
+* _filename_ - path to the file. This is only used for error reporting
+* _file_ - contents of the file to parse
+* _copy_ - whether to make a copy of the file string or just reference it
+
+_Returns_:
+
+`true` if the file was parsed successfully, `false` if there was an error. 
+Possible errors include `aggregate` not being an aggregate or there being syntax 
+errors in the file.
+
 ###slc_save_node
 ```c
 bool slc_save_node(SLCONFIG_NODE* node, SLCONFIG_STRING filename,
                    SLCONFIG_STRING line_end, SLCONFIG_STRING indentation);
 ```
 
+Saves a node to a file. Block comments are used for docstrings. Heredocs are 
+used for strings that cannot be naked strings; naked strings are used 
+otherwise.
+
+_Arguments_:
+
+* _node_ - any node. This doesn't have to be the root node
+* _filename_ - filename to save the node to
+* _line_end_ - string to append at the end of every statement. Can be empty
+* _indentation_ - string to prepend to statements for every level of 
+indentation. Can be empty
+
+_Returns_:
+
+`true` if the node was saved successfully. `false` if there was an error with 
+writing the file.
+
 ###slc_save_node_string
 ```c
 SLCONFIG_STRING slc_save_node_string(SLCONFIG_NODE* node, SLCONFIG_STRING line_end,
                                    SLCONFIG_STRING indentation);
 ```
+
+Like [slc_save_node](#slc_save_node) but with redirecting the output to a 
+string.
+
+_Arguments_:
+
+* _node_ - any node. This doesn't have to be the root node
+* _line_end_ - string to append at the end of every statement. Can be empty
+* _indentation_ - string to prepend to statements for every level of 
+indentation. Can be empty
+
+_Returns_:
+
+The string holding the representation of the passed node. This string is newly 
+allocated and will need to be destroyed.
 
 ###slc_add_node
 ```c
