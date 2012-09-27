@@ -147,7 +147,7 @@ Still a comment
 
 Nodes in SLConfig are mutable and their values can be changed. The type of a 
 node, however, cannot be changed. Additionally, a string node cannot be 
-changed into aggregate node and vice versa. Here are some examples of valid 
+changed into an aggregate node and vice versa. Here are some examples of valid
 assignments:
 
 ```
@@ -201,7 +201,7 @@ type aggr:var = abc;
 
 Nodes can be expanded to assign their values to other nodes by prefixing 
 their name with the dollar symbol (`$`). This can be done with both with aggregate and
-string nodes. When an aggregate is expanded, it's contents get pasted into the
+string nodes. When an aggregate is expanded, its contents get pasted into the
 current aggregate. Some examples:
 
 ```
@@ -224,7 +224,8 @@ aggr1
 aggr1
 {
     var = def;
-    var = $::aggr1:var; // This refers to the yet unmodified aggr1, so the value of var is now abc
+    var = $::aggr1:var; // This refers to the yet unmodified aggr1,
+                        // so the value of var is now abc
 }
 ```
 
@@ -838,7 +839,8 @@ The node that corresponds to `idx` or `NULL` if the index is invalid.
 
 ###slc_get_node_by_reference
 ```c
-SLCONFIG_NODE* slc_get_node_by_reference(SLCONFIG_NODE* aggregate, SLCONFIG_STRING reference);
+SLCONFIG_NODE* slc_get_node_by_reference(SLCONFIG_NODE* aggregate,
+                                         SLCONFIG_STRING reference);
 ```
 
 Searches for a node using the reference using the aggregate as a starting 
