@@ -15,7 +15,6 @@ SHARED_FILE = lib/lib$(SHARED_NAME)$(SHARED_LIB_EXT)
 
 EXAMPLE_SOURCES = $(wildcard examples/*.c)
 EXAMPLE_FILES = $(patsubst examples/%.c, bin/%$(EXE), $(EXAMPLE_SOURCES))
-#EXAMPLE_FILES = bin/test bin/print
 EXAMPLE_LDFLAGS = -Llib -l$(STATIC_NAME)
 
 DOC_SOURCE = README.md
