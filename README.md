@@ -63,7 +63,8 @@ examples. Run `make install` to install the library.
 Useful targets:
 
 * _all_ - Make the library and the examples
-* _library_ - Make just the library
+* _static_ - Make just the static library
+* _shared_ - Make just the shared library
 * _examples_ - Make just the examples
 * _documentation_ - Use pandoc to convert this readme into HTML
 * _clean_ - Undo the actions of the _all_ target
