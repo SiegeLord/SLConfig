@@ -523,6 +523,15 @@ typedef struct
 } SLCONFIG_STRING;
 ```
 
+A string type used by the SLConfig library. C strings were not use to minimize 
+unnecessary memory allocations for the zero byte. All strings 
+returned by the API should be treated as immutable.
+
+_Fields_:
+
+* _start_ - pointer to the start of the string
+* _end_ - pointer one byte past the end of the string
+
 ###SLCONFIG_VTABLE
 ```c
 typedef struct
@@ -536,15 +545,90 @@ typedef struct
 } SLCONFIG_VTABLE;
 ```
 
+A vtable that can be used to customize how SLConfig interacts with files and 
+memory. The user specified functions should follow the same semantics as the 
+default implementations (see code blocks after each field documentation).
+
+_Fields_:
+
+* _realloc_ - Memory management.
+
+```c
+    void* default_realloc(void* buf, size_t size)
+    {
+        return realloc(buf, size);
+    }
+```
+
+* _stderr_ - Error output. You should make a copy of the passed string if you 
+want to hold on to it for longer than the duration of the call.
+
+```c
+    void default_stderr(SLCONFIG_STRING s)
+    {
+        fprintf(stderr, "%.*s", (int)slc_string_length(s), s.start);
+    }
+```
+
+* _fopen_ - Opening file objects for reading and writing.
+
+```c
+    void* default_fopen(SLCONFIG_STRING filename, bool read)
+    {
+        char* filename_str = slc_to_c_str(filename);
+        void* ret = fopen(filename_str, read ? "rb" : "wb");
+        free(filename_str);
+        return ret;
+    }
+```
+
+* _fclose_ - Close file objects created by fopen.
+
+```c
+    int default_fclose(void* f)
+    {
+        return fclose(f);
+    }
+```
+
+* _fread_ - Read from file objects.
+
+```c
+    size_t default_fread(void* buf, size_t size, void* f)
+    {
+        return fread(buf, 1, size, f);
+    }
+```
+
+* _fwrite_ - Write to file objects.
+
+```c
+    size_t default_fwrite(const void* buf, size_t size, void* f)
+    {
+        return fwrite(buf, 1, size, f);
+    }
+```
+
 ###SLCONFIG_NODE
 ```c
 typedef struct SLCONFIG_NODE SLCONFIG_NODE;
 ```
 
+An opaque struct representing an SLConfig node.
+
 ###slc_create_root_node
 ```c
 SLCONFIG_NODE* slc_create_root_node(const SLCONFIG_VTABLE* vtable);
 ```
+
+Creates an empty root node using the passed vtable. All nodes added to this 
+root will use the same vtable. If the `vtable` is `NULL` then the default 
+implementations are used. If any field of the vtable is `NULL` then the 
+default implementation is used for that field.
+
+_Arguments_:
+
+* _vtable_ - vtable to use for all future operations.
 
 ###slc_add_search_directory
 ```c
