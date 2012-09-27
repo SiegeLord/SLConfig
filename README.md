@@ -200,7 +200,7 @@ type aggr:var = abc;
 ### Node expansion
 
 Nodes can be expanded to assign their values to other nodes by prefixing 
-their name with the dollar symbol. This can be done with both with aggregate and
+their name with the dollar symbol (`$`). This can be done with both with aggregate and
 string nodes. When an aggregate is expanded, it's contents get pasted into the
 current aggregate. Some examples:
 
@@ -245,7 +245,7 @@ var = $var ABC $var; // The value of var is abcdefABCabcdef
 
 ### Node deletion
 
-It is possible to delete nodes by prefixing their name with a tilde. Some 
+It is possible to delete nodes by prefixing their name with a tilde (`~`). Some 
 examples:
 
 ```
@@ -299,10 +299,10 @@ asd/*;
 Note that the last two seem to contain comment starts, but in fact the 
 parser will absorb those characters into the naked string.
 
-Escaped strings are sequences of characters between double quotes. Double 
+Escaped strings are sequences of characters between double quotes (`"`). Double 
 quotes can be inserted into escaped quotes by escaping them with the backslash 
-('\'). Most escaped codes from the C are also supported. Unknown escape codes 
-are passed as is (e.g. "\8" becomes "8"). Newline characters are 
+(`\`). Most escaped codes from the C are also supported. Unknown escape codes 
+are passed as is (e.g. `"\8"` becomes `"8"`). Newline characters are 
 accepted, but are parsed as is, so note must be taken of what style of line 
 endings are used. Here are some examples of escaped strings, again defining 
 string nodes (it is perfectly valid to use any type of string for any usage of 
@@ -337,7 +337,7 @@ var = $"with spaces"; // The value of var is now "
 
 ### Docstrings
 
-Comments whose first character is a `*` are docstrings, and are 
+Comments whose first character is an asterisk (`*`) are docstrings, and are 
 accessible from the user code. They are bound to the node definition 
 that follows them, or that is on the same line before them. Multiple 
 docstrings are concatenated together with the line feed character. If a 
