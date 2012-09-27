@@ -159,8 +159,9 @@ aggr = abc;      // Can't change aggr into a string
 ### References
 
 It is possible to refer to nodes outside of the current aggregate's scope using 
-the colon symbol. Absolute references start with a double colon. Some examples 
-of valid usage:
+the colon symbol. Absolute references start with a double colon. Relative 
+references are handled by searching the current aggregate, and then searching 
+its parent if it is not found. Some examples of valid usage:
 
 ```
 type var;
@@ -754,65 +755,218 @@ SLCONFIG_NODE* slc_add_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type,
                             bool copy_name, bool is_aggregate);
 ```
 
+Adds a node to an aggregate. If an aggregate already has a node which matches 
+the type string, the name and the type (aggregate vs. not aggregate) then that 
+node is returned instead without making a new node. The node is initialized to 
+have no children if it is an aggregate, or an empty string if it is not. If an 
+existing node is returned then it is not altered in any way.
+
+_Arguments_:
+
+* _aggregate_ - aggregate to add the node to
+* _type_ - type string of the new node. Can be empty
+* _copy_type_ - whether to make a copy of the type string or just reference it
+* _name_ - name of the new node. Can be empty
+* _copy_name_ - whether to make a copy of the name string or just reference it
+* _is_aggregate_ - whether the newly added node is an aggregate
+
+_Returns_:
+
+Newly added node, existing node or `NULL` if there is an error. Possible 
+sources of error include `aggregate` not being an aggregate, or there already 
+existing a node with the same name but differing type.
+
 ###slc_destroy_node
 ```c
 void slc_destroy_node(SLCONFIG_NODE* node);
 ```
+
+Destroys a node, destroying any of its children and detaching itself from its 
+parent, if any. The order of its sibling nodes is not affected. All references 
+to the children to this node become invalid.
+
+_Arguments_:
+
+* _node_ - any node
 
 ###slc_get_node
 ```c
 SLCONFIG_NODE* slc_get_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING name);
 ```
 
+Searches the children of the passed aggregate for a node with a certain name.
+
+_Arguments_:
+
+* _aggregate_ - an aggregate to search
+* _name_ - name of the node to search for
+
+_Returns_:
+
+The found node or `NULL` if no such child node exists.
+
 ###slc_get_node_by_index
 ```c
 SLCONFIG_NODE* slc_get_node_by_index(SLCONFIG_NODE* aggregate, size_t idx);
 ```
+
+Gets the child of the passed aggregate by its index.
+
+_Arguments_:
+
+* _aggregate_ - an aggregate to examine
+* _idx_ - index of the node to retrieve
+
+_Returns_:
+
+The node that corresponds to `idx` or `NULL` if the index is invalid.
 
 ###slc_get_node_by_reference
 ```c
 SLCONFIG_NODE* slc_get_node_by_reference(SLCONFIG_NODE* aggregate, SLCONFIG_STRING reference);
 ```
 
+Searches for a node using the reference using the aggregate as a starting 
+point. Essentially the same syntax for references is used as in the file 
+format except that comments are not allowed. Note that if a relative 
+reference is passed to this function then the node that is returned might not 
+be a child of the aggregate, and in fact could be the aggregate itself.
+
+_Arguments_:
+
+* _aggregate_ - an aggregate to start the search in (if a relative reference 
+is used)
+* _reference_ - reference to the node to search for
+
+_Returns_:
+
+The found node or `NULL` if no such node exists.
+
 ###slc_get_name
 ```c
 SLCONFIG_STRING slc_get_name(SLCONFIG_NODE* node);
 ```
+
+Gets the name of the node.
+
+_Arguments_:
+
+* _node_ - any node
+
+_Returns_:
+
+The name of the node.
+
 
 ###slc_get_full_name
 ```c
 SLCONFIG_STRING slc_get_full_name(SLCONFIG_NODE* node);
 ```
 
+Gets the full name of the node. This is essentially the absolute reference to it. 
+It is not exactly that because the names of the node and its ancestors are not 
+escaped, so this is primarily useful for error reporting.
+
+_Arguments_:
+
+* _node_ - any node
+
+_Returns_:
+
+The full name of the node.
+
 ###slc_get_type
 ```c
 SLCONFIG_STRING slc_get_type(SLCONFIG_NODE* node);
 ```
+
+Gets the type of the node.
+
+_Arguments_:
+
+* _node_ - any node
+
+_Returns_:
+
+The type of the node.
 
 ###slc_is_aggregate
 ```c
 bool slc_is_aggregate(SLCONFIG_NODE* node);
 ```
 
+Checks whether the node is an aggregate or not.
+
+_Arguments_:
+
+* _node_ - any node
+
+_Returns_:
+
+`true` if the node is an aggregate, `false` otherwise.
+
 ###slc_get_num_children
 ```c
 size_t slc_get_num_children(SLCONFIG_NODE* node);
 ```
+
+Returns the number of children of the node.
+
+_Arguments_:
+
+* _node_ - any node
+
+_Returns_:
+
+Number of children of the node if it is an aggregate, `0` otherwise.
 
 ###slc_get_value
 ```c
 SLCONFIG_STRING slc_get_value(SLCONFIG_NODE* string_node);
 ```
 
+Gets the value of a string node.
+
+_Arguments_:
+
+* _string_node_ - any string node
+
+_Returns_:
+
+The value of the string node.
+
 ###slc_set_value
 ```c
 bool slc_set_value(SLCONFIG_NODE* string_node, SLCONFIG_STRING value, bool copy);
 ```
 
+Sets the value of a string node.
+
+_Arguments_:
+
+* _string_node_ - any string node
+* _value_ - new value
+* _copy_ - whether to make a copy of the value string or just reference it
+
+_Returns_:
+
+`true` if the value was set successfully, `false` otherwise (e.g. the 
+`string_node` is actually an aggregate).
+
 ###slc_get_user_data
 ```c
 intptr_t slc_get_user_data(SLCONFIG_NODE* node);
 ```
+
+Gets the user data of the node.
+
+_Arguments_:
+
+* _node_ - any node
+
+_Returns_:
+
+The user data of the node.
 
 ###slc_set_user_data
 ```c
@@ -820,35 +974,110 @@ void slc_set_user_data(SLCONFIG_NODE* node, intptr_t data,
                        void (*user_destructor)(intptr_t));
 ```
 
+Sets the user data of the node, destroying any user data that was previously 
+set for this node.
+
+_Arguments_:
+
+* _node_ - any node
+* _data_ - user data
+* _user_destructor_ - this function will be called with the `data` as the 
+argument when the node is destroyed, or this function is called again. Can be 
+`NULL`
+
+_Returns_:
+
+The user data of the node.
+
 ###slc_get_comment
 ```c
 SLCONFIG_STRING slc_get_comment(SLCONFIG_NODE* node);
 ```
+
+Gets the docstring of the node.
+
+_Arguments_:
+
+* _node_ - any node
+
+_Returns_:
+
+The docstring of the node.
 
 ###slc_set_comment
 ```c
 void slc_set_comment(SLCONFIG_NODE* node, SLCONFIG_STRING comment, bool copy);
 ```
 
+Sets the docstring of a string node.
+
+_Arguments_:
+
+* _string_node_ - any string node
+* _docstring_ - new docstring
+* _copy_ - whether to make a copy of the docstring or just reference it
+
 ###slc_string_length
 ```c
 size_t slc_string_length(SLCONFIG_STRING str);
 ```
+
+Gets the length of the string.
+
+_Arguments_:
+
+* _str_ - a string
+
+_Returns_:
+
+Length of the string in bytes.
 
 ###slc_string_equal
 ```c
 bool slc_string_equal(SLCONFIG_STRING a, SLCONFIG_STRING b);
 ```
 
+Checks if two strings are equal.
+
+_Arguments_:
+
+* _a_ - a string
+* _b_ - a string
+
+_Returns_:
+
+`true` if the two strings are identical, `false` if they are not.
+
 ###slc_from_c_str
 ```c
 SLCONFIG_STRING slc_from_c_str(const char* str);
 ```
 
+Creates a reference to the passed zero delimited C string.
+
+_Arguments_:
+
+* _str_ - a C string
+
+_Returns_:
+
+A string that references the passed C string.
+
 ###slc_to_c_str
 ```c
 char* slc_to_c_str(SLCONFIG_STRING str);
 ```
+
+Creates a zero delimited C string. The passed string is not modified.
+
+_Arguments_:
+
+* _str_ - a string
+
+_Returns_:
+
+A newly allocated C string. This string should be freed using the `free` 
+function.
 
 ###slc_append_to_string
 ```c
@@ -856,11 +1085,31 @@ void slc_append_to_string(SLCONFIG_STRING* dest, SLCONFIG_STRING new_str,
                           void* (*custom_realloc)(void*, size_t));
 ```
 
+Appends a string to a different string using a custom memory allocator if 
+needed.
+
+_Arguments_:
+
+* _dest_ - destination string
+* _new_str_ - string to append to the destination string
+* _custom_realloc_ - a custom realloc function. Can be `NULL` in which case 
+the C `realloc` function is used.
+
 ###slc_destroy_string
 ```c
 void slc_destroy_string(SLCONFIG_STRING* str,
                         void* (*custom_realloc)(void*, size_t));
 ```
+
+Destroys a string using a custom memory allocator if needed. For strings
+returned by the API the allocator must match the allocator passed in the 
+custom vtable.
+
+_Arguments_:
+
+* _str_ - string to destroy
+* _custom_realloc_ - a custom realloc function. Can be `NULL` in which case 
+the C `realloc` function is used.
 
 ## License
 

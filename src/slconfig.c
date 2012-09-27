@@ -440,6 +440,7 @@ void slc_set_comment(SLCONFIG_NODE* node, SLCONFIG_STRING comment, bool copy)
 SLCONFIG_STRING slc_get_value(SLCONFIG_NODE* string_node)
 {
 	assert(string_node);
+	assert(!string_node->is_aggregate);
 	if(string_node->is_aggregate)
 	{
 		SLCONFIG_STRING ret = {0, 0};
