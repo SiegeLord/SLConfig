@@ -81,11 +81,33 @@ bool test_saving()
 	return ret;
 }
 
+static
+void destructor(intptr_t data)
+{
+	(*(int*)data)--;
+}
+
+static
+bool test_user_data()
+{
+	bool ret = true;
+	SLCONFIG_NODE* root = slc_create_root_node(NULL);
+	int data = 2;
+	slc_set_user_data(root, (intptr_t)&data, &destructor);
+	slc_set_user_data(root, 1, 0);
+	TEST(data == 1);
+	slc_set_user_data(root, (intptr_t)&data, &destructor);
+	slc_destroy_node(root);
+	TEST(data == 0);
+	return ret;
+}
+
 int main()
 {
 	bool ret = true;
 	ret &= test_references();
 	ret &= test_saving();
+	ret &= test_user_data();
 
 	if(ret)
 	{
