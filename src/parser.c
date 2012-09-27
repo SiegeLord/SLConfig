@@ -61,7 +61,7 @@ bool advance(PARSER_STATE* state)
 			}
 			else
 			{
-				state->last_node = 0;
+				state->last_node = NULL;
 				str_ptr = &state->comment;
 			}
 			
@@ -116,11 +116,11 @@ static
 bool parse_node_ref_name(CONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_STRING name, size_t name_line, SLCONFIG_NODE** ref_node, PARSER_STATE* state)
 {
 	(void)config;
-	SLCONFIG_NODE* ret = 0;
+	SLCONFIG_NODE* ret = NULL;
 	while(true)
 	{
 		/* The idea here is to prevent going up the hierarchy once we went down one step in it */
-		if(ret == 0)
+		if(!ret)
 			ret = _slc_search_node(aggregate, name);
 		else
 			ret = slc_get_node(aggregate, name);
@@ -407,7 +407,7 @@ bool parse_left_hand_side(CONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_NOD
 static
 bool parse_assign_expression(CONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* state)
 {
-	SLCONFIG_NODE* lhs = 0;
+	SLCONFIG_NODE* lhs = NULL;
 	bool is_new = false;
 	bool expect_assign = false;
 	if(!parse_left_hand_side(config, aggregate, &lhs, &expect_assign, state))
@@ -415,7 +415,7 @@ bool parse_assign_expression(CONFIG* config, SLCONFIG_NODE* aggregate, PARSER_ST
 	if(lhs)
 	{
 		bool was_aggregate = false;
-		is_new = lhs->parent == 0;
+		is_new = lhs->parent == NULL;
 		if(expect_assign)
 		{
 			if(state->cur_token.type == TOKEN_ASSIGN)
@@ -490,7 +490,7 @@ bool parse_assign_expression(CONFIG* config, SLCONFIG_NODE* aggregate, PARSER_ST
 				
 				memcpy(lhs, &temp_node, sizeof(SLCONFIG_NODE));
 				if(is_new)
-					lhs->parent = 0; /* So the attach code below works */
+					lhs->parent = NULL; /* So the attach code below works */
 				for(size_t ii = 0; ii < lhs->num_children; ii++)
 					lhs->children[ii]->parent = lhs;
 			}
