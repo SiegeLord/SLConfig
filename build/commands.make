@@ -42,6 +42,8 @@ ifeq ($(OS),"Windows")
     MKDIR = mkdir
     MV    = move
     LN    = mklink
+    INSTALL_BIN = copy /Y
+    INSTALL_SRC = copy /Y
 else ifeq ($(OS),"Linux")
     RM    = rm -f
     RMDIR = rm -rf
@@ -49,22 +51,30 @@ else ifeq ($(OS),"Linux")
     MKDIR = mkdir -p
     MV    = mv
     LN    = ln -s
+    INSTALL_BIN = install -D
+    INSTALL_SRC = install -D -m 644
 else ifeq ($(OS),"FreeBSD")
     RM    = rm -f
     RMDIR = rm -rf
     MKDIR = mkdir -p
     MV    = mv
     LN    = ln -s
+    INSTALL_BIN = install -D
+    INSTALL_SRC = install -D -m 644
 else ifeq ($(OS),"Solaris")
     RM    = rm -f
     RMDIR = rm -rf
     MKDIR = mkdir -p
     MV    = mv
     LN    = ln -s
+    INSTALL_BIN = install -D
+    INSTALL_SRC = install -D -m 644
 else ifeq ($(OS),"Darwin")
     RM    = rm -f
     RMDIR = rm -rf
     MKDIR = mkdir -p
     MV    = mv
     LN    = ln -s
+    INSTALL_BIN = install -D
+    INSTALL_SRC = install -D -m 644
 endif 

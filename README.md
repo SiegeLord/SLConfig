@@ -57,7 +57,21 @@ YellowAnt:health = 10;
 
 ## Building
 
-Run `make` to build the library and examples.
+You will need a C99 capable compiler. Run `make` to build the library and
+examples. Run `make install` to install the library.
+
+Useful targets:
+
+* _all_ - Make the library and the examples
+* _library_ - Make just the library
+* _examples_ - Make just the examples
+* _documentation_ - Use pandoc to convert this readme into HTML
+* _clean_ - Undo the actions of the _all_ target
+
+Useful variables to alter:
+
+* _CC_ - The C compiler
+* _INSTALL_PREFIX_ - Where to install the files
 
 ## Format Definition
 

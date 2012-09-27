@@ -1,7 +1,7 @@
 include build/commands.make
 
 CC = gcc
-C_FLAGS = -g -Wall -Wextra --std=c99 -I./include
+C_FLAGS = -g -O2 -Wall -Wextra --std=c99 -I./include
 
 LIB_SOURCES = $(wildcard src/*.c)
 LIB_OBJS = $(patsubst src/%.c, .objs/%.o, $(LIB_SOURCES))
@@ -16,16 +16,23 @@ EXAMPLE_LDFLAGS = -Llib -l$(LIB_NAME)
 DOC_SOURCE = README.md
 DOC_FILE = doc/doc.html
 
+INSTALL_PREFIX = /usr/local
+INSTALL_SOURCES = $(wildcard include/slconfig/*.h)
+INSTALL_HEADERS = $(patsubst %.h, $(INSTALL_PREFIX)/%.h, $(INSTALL_SOURCES))
+INSTALL_LIBS = $(INSTALL_PREFIX)/$(LIB_FILE)
+
 .PHONY : all
 .PHONY : library
 .PHONY : examples
 .PHONY : clean
 .PHONY : FORCE
+.PHONY : install
 
 all : library examples
 library : $(LIB_FILE)
 examples : $(EXAMPLE_FILES)
 documentation : $(DOC_FILE)
+install : $(INSTALL_HEADERS) $(INSTALL_LIBS)
 
 .objs : 
 	$(MKDIR) .objs
@@ -38,6 +45,12 @@ lib :
 
 doc :
 	$(MKDIR) doc
+
+$(INSTALL_PREFIX)/include/%.h : include/%.h
+	$(INSTALL_SRC) $< $@
+
+$(INSTALL_PREFIX)/lib/%$(STATIC_LIB_EXT) : lib/%$(STATIC_LIB_EXT)
+	$(INSTALL_BIN) $< $@
 
 $(DOC_FILE) : doc $(DOC_SOURCE)
 	pandoc -o $(DOC_FILE) $(DOC_SOURCE)
