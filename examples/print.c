@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 	int ret = -1;
-	SLCONFIG_NODE* root = slc_create_root_node(0);
+	SLCONFIG_NODE* root = slc_create_root_node(NULL);
 	
 	for(int ii = 1; ii < argc - 1; ii++)
 	{

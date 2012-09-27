@@ -100,18 +100,18 @@ SLCONFIG_NODE* slc_create_root_node(const SLCONFIG_VTABLE* vtable_ptr)
 	
 	CONFIG* config = vtable.realloc(0, sizeof(CONFIG));
 	config->vtable = vtable;
-	config->files = 0;
+	config->files = NULL;
 	config->num_files = 0;
 	config->root = vtable.realloc(0, sizeof(SLCONFIG_NODE));
 	memset(config->root, 0, sizeof(SLCONFIG_NODE));
 	config->root->is_aggregate = true;
 	config->root->config = config;
 	config->num_includes = 0;
-	config->include_list = 0;
-	config->include_lines = 0;
-	config->include_ownerships = 0;
+	config->include_list = NULL;
+	config->include_lines = NULL;
+	config->include_ownerships = NULL;
 	config->num_search_dirs = 0;
-	config->search_dirs = 0;
+	config->search_dirs = NULL;
 	config->search_dir_ownerships = 0;
 	
 	return config->root;
@@ -124,7 +124,7 @@ bool _slc_load_file(CONFIG* config, SLCONFIG_STRING filename, SLCONFIG_STRING* f
 	#define BUF_SIZE (1024)
 	size_t total_bytes_read = 0;
 	size_t bytes_read;
-	char* buff = 0;
+	char* buff = NULL;
 	void* f = config->vtable.fopen(filename, true);
 	if(!f)
 	{
@@ -226,7 +226,7 @@ void detach_node(SLCONFIG_NODE* node)
 	if(node->parent)
 	{
 		SLCONFIG_NODE* parent = node->parent;
-		node->parent = 0;
+		node->parent = NULL;
 		size_t ii;
 		
 		for(ii = 0; ii < parent->num_children; ii++)
@@ -296,7 +296,7 @@ void slc_destroy_node(SLCONFIG_NODE* node)
 SLCONFIG_NODE* _slc_search_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING name)
 {
 	if(!aggregate)
-		return 0;
+		return NULL;
 	
 	SLCONFIG_NODE* ret = slc_get_node(aggregate, name);
 	
@@ -316,15 +316,15 @@ SLCONFIG_NODE* slc_get_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING name)
 			return aggregate->children[ii];
 	}
 	
-	return 0;
+	return NULL;
 }
 
 SLCONFIG_NODE* _slc_add_node_no_attach(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type, bool copy_type, SLCONFIG_STRING name, bool copy_name, bool is_aggregate)
 {
 	if(!aggregate)
-		return 0;
+		return NULL;
 	if(!aggregate->is_aggregate)
-		return 0;
+		return NULL;
 	
 	SLCONFIG_NODE* child = slc_get_node(aggregate, name);
 	if(child)
@@ -332,7 +332,7 @@ SLCONFIG_NODE* _slc_add_node_no_attach(SLCONFIG_NODE* aggregate, SLCONFIG_STRING
 		if(slc_string_equal(child->type, type) && child->is_aggregate == is_aggregate)
 			return child;
 		else
-			return 0;
+			return NULL;
 	}
 	
 	child = aggregate->config->vtable.realloc(0, sizeof(SLCONFIG_NODE));
@@ -364,7 +364,7 @@ void _slc_attach_node(SLCONFIG_NODE* aggregate, SLCONFIG_NODE* node)
 		return;
 	if(node->parent == aggregate)
 		return;
-	assert(node->parent == 0);
+	assert(node->parent == NULL);
 	//printf("Attaching %.*s to %.*s : %p\n", (int)slc_string_length(node->name), node->name.start, (int)slc_string_length(aggregate->name), aggregate->name.start, aggregate);
 	node->parent = aggregate;
 	aggregate->children = aggregate->config->vtable.realloc(aggregate->children, (aggregate->num_children + 1) * sizeof(SLCONFIG_NODE*));
@@ -484,7 +484,7 @@ SLCONFIG_NODE* slc_get_node_by_index(SLCONFIG_NODE* aggregate, size_t idx)
 	if(aggregate->is_aggregate)
 		return aggregate->children[idx];
 	else
-		return 0;
+		return NULL;
 }
 
 size_t slc_get_num_children(SLCONFIG_NODE* node)
@@ -493,7 +493,7 @@ size_t slc_get_num_children(SLCONFIG_NODE* node)
 	if(node->is_aggregate)
 		return node->num_children;
 	else
-		return 0;
+		return NULL;
 }
 
 void _slc_copy_into(SLCONFIG_NODE* dest, SLCONFIG_NODE* src)
@@ -503,14 +503,14 @@ void _slc_copy_into(SLCONFIG_NODE* dest, SLCONFIG_NODE* src)
 	dest->name = src->name;
 	dest->own_name = src->own_name;
 	
-	dest->value.start = 0;
-	dest->value.end = 0;
+	dest->value.start = NULL;
+	dest->value.end = NULL;
 	slc_append_to_string(&dest->value, src->value, src->config->vtable.realloc);
 	dest->own_value = true;
 	
 	dest->is_aggregate = src->is_aggregate;
 	dest->num_children = 0;
-	dest->children = 0;
+	dest->children = NULL;
 	
 	/* Don't touch the parent */
 	
@@ -574,9 +574,9 @@ void _slc_clear_includes(CONFIG* config)
 		config->vtable.realloc(config->include_lines, 0);
 	}
 	
-	config->include_list = 0;
-	config->include_ownerships = 0;
-	config->include_lines = 0;
+	config->include_list = NULL;
+	config->include_ownerships = NULL;
+	config->include_lines = NULL;
 	config->num_includes = 0;
 }
 
@@ -631,8 +631,8 @@ void slc_clear_search_directories(SLCONFIG_NODE* node)
 		config->vtable.realloc(config->search_dir_ownerships, 0);
 	}
 	
-	config->search_dirs = 0;
-	config->search_dir_ownerships = 0;
+	config->search_dirs = NULL;
+	config->search_dir_ownerships = NULL;
 	config->num_search_dirs = 0;
 }
 

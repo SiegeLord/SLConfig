@@ -800,7 +800,7 @@ SLCONFIG_NODE* slc_get_node_by_reference(SLCONFIG_NODE* aggregate, SLCONFIG_STRI
 {
 	assert(aggregate);
 	if(!aggregate->is_aggregate)
-		return 0;
+		return NULL;
 
 	TOKENIZER_STATE state;
 	state.filename = slc_from_c_str("");
@@ -810,7 +810,7 @@ SLCONFIG_NODE* slc_get_node_by_reference(SLCONFIG_NODE* aggregate, SLCONFIG_STRI
 	state.config = aggregate->config;
 	state.gag_errors = true;
 	
-	SLCONFIG_NODE* ret = 0;
+	SLCONFIG_NODE* ret = NULL;
 	
 	_slc_get_next_token(&state);
 	if(state.cur_token.type == TOKEN_DOUBLE_COLON)
@@ -821,7 +821,7 @@ SLCONFIG_NODE* slc_get_node_by_reference(SLCONFIG_NODE* aggregate, SLCONFIG_STRI
 	
 	while(state.cur_token.type == TOKEN_STRING)
 	{
-		if(ret == 0)
+		if(!ret)
 			ret = _slc_search_node(aggregate, state.cur_token.str);
 		else
 			ret = slc_get_node(aggregate, state.cur_token.str);
@@ -829,14 +829,14 @@ SLCONFIG_NODE* slc_get_node_by_reference(SLCONFIG_NODE* aggregate, SLCONFIG_STRI
 		if(state.cur_token.own)
 			slc_destroy_string(&state.cur_token.str, aggregate->config->vtable.realloc);
 		
-		if(ret == 0)
-			return 0;
+		if(!ret)
+			return NULL;
 		
 		_slc_get_next_token(&state);
 		if(state.cur_token.type == TOKEN_COLON)
 		{
 			if(!ret->is_aggregate)
-				return 0;
+				return NULL;
 			
 			aggregate = ret;
 			_slc_get_next_token(&state);
@@ -851,5 +851,5 @@ SLCONFIG_NODE* slc_get_node_by_reference(SLCONFIG_NODE* aggregate, SLCONFIG_STRI
 		}
 	}
 	
-	return 0;
+	return NULL;
 }
