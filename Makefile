@@ -29,7 +29,7 @@ INSTALL_LIBS = $(INSTALL_PREFIX)/$(STATIC_FILE) $(INSTALL_PREFIX)/$(SHARED_FILE)
 .PHONY : static
 .PHONY : shared
 .PHONY : examples
-.PHONY : clean
+.IGNORE : clean
 .PHONY : FORCE
 .PHONY : install
 
@@ -53,13 +53,13 @@ doc :
 	$(MKDIR) doc
 
 $(INSTALL_PREFIX)/include/%.h : include/%.h
-	$(INSTALL_SRC) $< $@
+	$(INSTALL_SRC) $(subst /,$(PATH_SEP), $<) $(subst /,$(PATH_SEP), $@)
 
 $(INSTALL_PREFIX)/lib/%$(STATIC_LIB_EXT) : lib/%$(STATIC_LIB_EXT)
-	$(INSTALL_BIN) $< $@
+	$(INSTALL_BIN) $(subst /,$(PATH_SEP), $<) $(subst /,$(PATH_SEP), $@)
 
 $(INSTALL_PREFIX)/lib/%$(SHARED_LIB_EXT) : lib/%$(SHARED_LIB_EXT)
-	$(INSTALL_BIN) $< $@
+	$(INSTALL_BIN) $(subst /,$(PATH_SEP), $<) $(subst /,$(PATH_SEP), $@)
 
 $(DOC_FILE) : doc $(DOC_SOURCE)
 	pandoc -o $(DOC_FILE) $(DOC_SOURCE)
@@ -80,11 +80,11 @@ bin/%$(EXE) : examples/%.c bin static FORCE
 	$(CC) -c $< $(SHARED_FLAGS) -o $@
 
 clean : 
-	$(RM) $(DOC_FILE)
-	$(RM) $(STATIC_FILE)
-	$(RM) $(SHARED_FILE)
-	$(RM) $(EXAMPLE_FILES)
-	$(RM) $(STATIC_OBJS) $(SHARED_OBJS)
+	$(RM) $(subst /,$(PATH_SEP), $(DOC_FILE))
+	$(RM) $(subst /,$(PATH_SEP), $(STATIC_FILE))
+	$(RM) $(subst /,$(PATH_SEP), $(SHARED_FILE))
+	$(RM) $(subst /,$(PATH_SEP), $(EXAMPLE_FILES))
+	$(RM) $(subst /,$(PATH_SEP), $(STATIC_OBJS) $(SHARED_OBJS))
 	$(RMDIR) .objs
 	$(RMDIR) bin
 	$(RMDIR) lib

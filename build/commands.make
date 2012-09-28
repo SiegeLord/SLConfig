@@ -3,7 +3,7 @@ ifdef SystemRoot
     STATIC_LIB_EXT  = .lib
     SHARED_LIB_EXT = .dll
     EXE             =.exe
-    PATH_SEP        =\
+    PATH_SEP        =\\
     message         = @(echo $1)
     SHELL           = cmd.exe
     LIB_PREFIX      =
@@ -39,13 +39,13 @@ endif
 # Define command for copy, remove and create file/dir
 ifeq ($(OS),"Windows")
     RM    = del /Q
-    RMDIR = del /Q
+    RMDIR = rmdir
     CP    = copy /Y
     MKDIR = mkdir
     MV    = move
     LN    = mklink
-    INSTALL_BIN = copy /Y
-    INSTALL_SRC = copy /Y
+    INSTALL_BIN = echo F | xcopy /F /Y
+    INSTALL_SRC = echo F | xcopy /F /Y
 else ifeq ($(OS),"Linux")
     RM    = rm -f
     RMDIR = rm -rf
