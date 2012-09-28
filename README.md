@@ -553,7 +553,7 @@ _Fields_:
 typedef struct
 {
 	void* (*realloc)(void* buf, size_t size);
-	void (*stderr)(SLCONFIG_STRING s);
+	void (*error)(SLCONFIG_STRING s);
 	void* (*fopen)(SLCONFIG_STRING filename, bool read);
 	int (*fclose)(void* file);
 	size_t (*fread)(void* buf, size_t size, void* file);
@@ -576,11 +576,11 @@ _Fields_:
     }
 ```
 
-* _stderr_ - Error output. A copy of the passed string should be made if it is
+* _error_ - Error output. A copy of the passed string should be made if it is
 retained for longer than the duration of the call.
 
 ```c
-    void default_stderr(SLCONFIG_STRING s)
+    void default_error(SLCONFIG_STRING s)
     {
         fprintf(stderr, "%.*s", (int)slc_string_length(s), s.start);
     }

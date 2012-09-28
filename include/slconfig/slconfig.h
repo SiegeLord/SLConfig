@@ -15,7 +15,7 @@ typedef struct
 typedef struct
 {
 	void* (*realloc)(void* buf, size_t size);
-	void (*stderr)(SLCONFIG_STRING s);
+	void (*error)(SLCONFIG_STRING s);
 	void* (*fopen)(SLCONFIG_STRING filename, bool read);
 	int (*fclose)(void* file);
 	size_t (*fread)(void* buf, size_t size, void* file);

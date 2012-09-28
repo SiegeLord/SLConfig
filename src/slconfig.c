@@ -27,7 +27,7 @@
 #include <assert.h>
 
 static
-void default_stderr(SLCONFIG_STRING s)
+void default_error(SLCONFIG_STRING s)
 {
 	fprintf(stderr, "%.*s", (int)slc_string_length(s), s.start);
 }
@@ -69,7 +69,7 @@ void* default_realloc(void* buf, size_t size)
 SLCONFIG_VTABLE default_vtable =
 {
 	&default_realloc,
-	&default_stderr,
+	&default_error,
 	&default_fopen,
 	&default_fclose,
 	&default_fread,
@@ -81,7 +81,7 @@ void fill_vtable(SLCONFIG_VTABLE* vtable)
 {
 #define FILL(a) if(!vtable->a) vtable->a = default_vtable.a;
 	FILL(realloc);
-	FILL(stderr);
+	FILL(error);
 	FILL(fopen);
 	FILL(fclose);
 	FILL(fread);

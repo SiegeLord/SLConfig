@@ -195,14 +195,14 @@ bool token_string(SLCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 				/*if(_slc_is_naked_string_character(*str->start))
 				{
 					_slc_print_error_prefix(state->config, state->filename, state->line, state->vtable);
-					state->vtable->stderr(slc_from_c_str("Error: Unexpected character '"));
+					state->vtable->error(slc_from_c_str("Error: Unexpected character '"));
 					SLCONFIG_STRING c = {str->start, str->start + 1};
-					state->vtable->stderr(c);
+					state->vtable->error(c);
 						
 					if(slc_string_length(pre_quote) == 0)
-						state->vtable->stderr(slc_from_c_str("' after quoted string.\n"));
+						state->vtable->error(slc_from_c_str("' after quoted string.\n"));
 					else
-						state->vtable->stderr(slc_from_c_str("' after final heredoc string sentinel.\n"));
+						state->vtable->error(slc_from_c_str("' after final heredoc string sentinel.\n"));
 					token->type = TOKEN_ERROR;
 				}*/
 				goto exit;
@@ -250,7 +250,7 @@ bool token_string(SLCONFIG_STRING *str, TOKEN* token, TOKENIZER_STATE* state)
 	if(!state->gag_errors)
 	{
 		_slc_print_error_prefix(state->config, state->filename, start_line, state->vtable);
-		state->vtable->stderr(slc_from_c_str("Error: Unterminated string.\n"));
+		state->vtable->error(slc_from_c_str("Error: Unterminated string.\n"));
 	}
 	token->type = TOKEN_ERROR;
 	return true;
@@ -377,7 +377,7 @@ bool token_block_comment(SLCONFIG_STRING* str, TOKEN* token, TOKENIZER_STATE* st
 			if(!state->gag_errors)
 			{
 				_slc_print_error_prefix(state->config, state->filename, start_line, state->vtable);
-				state->vtable->stderr(slc_from_c_str("Error: Unterminated block comment.\n"));
+				state->vtable->error(slc_from_c_str("Error: Unterminated block comment.\n"));
 			}
 			token->type = TOKEN_ERROR;
 			return true;

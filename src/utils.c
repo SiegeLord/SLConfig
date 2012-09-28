@@ -53,24 +53,24 @@ void _slc_print_error_prefix(CONFIG* config, SLCONFIG_STRING filename, size_t li
 		for(size_t ii = 0; ii < config->num_includes - 1; ii++)
 		{
 			if(ii == 0)
-				table->stderr(slc_from_c_str("In file included from "));
+				table->error(slc_from_c_str("In file included from "));
 			else
-				table->stderr(slc_from_c_str("                 from "));
-			table->stderr(config->include_list[ii]);
-			table->stderr(slc_from_c_str(":"));
+				table->error(slc_from_c_str("                 from "));
+			table->error(config->include_list[ii]);
+			table->error(slc_from_c_str(":"));
 			snprintf(buf, 32, "%zu", config->include_lines[ii]);
-			table->stderr(slc_from_c_str(buf));
+			table->error(slc_from_c_str(buf));
 			if(ii == config->num_includes - 2)
-				table->stderr(slc_from_c_str(":\n"));
+				table->error(slc_from_c_str(":\n"));
 			else
-				table->stderr(slc_from_c_str(",\n"));
+				table->error(slc_from_c_str(",\n"));
 		}
 	}
-	table->stderr(filename);
-	table->stderr(slc_from_c_str(":"));
+	table->error(filename);
+	table->error(slc_from_c_str(":"));
 	snprintf(buf, 32, "%zu", line);
-	table->stderr(slc_from_c_str(buf));
-	table->stderr(slc_from_c_str(": "));
+	table->error(slc_from_c_str(buf));
+	table->error(slc_from_c_str(": "));
 }
 
 /*
@@ -79,13 +79,13 @@ void _slc_print_error_prefix(CONFIG* config, SLCONFIG_STRING filename, size_t li
 void _slc_expected_after_error(CONFIG* config, TOKENIZER_STATE* state, size_t line, SLCONFIG_STRING expected, SLCONFIG_STRING after, SLCONFIG_STRING actual)
 {
 	_slc_print_error_prefix(config, state->filename, line, state->vtable);
-	state->vtable->stderr(slc_from_c_str("Error: Expected "));
-	state->vtable->stderr(expected);
-	state->vtable->stderr(slc_from_c_str(" after '"));
-	state->vtable->stderr(after);
-	state->vtable->stderr(slc_from_c_str("', not '"));
-	state->vtable->stderr(actual);
-	state->vtable->stderr(slc_from_c_str("'.\n"));
+	state->vtable->error(slc_from_c_str("Error: Expected "));
+	state->vtable->error(expected);
+	state->vtable->error(slc_from_c_str(" after '"));
+	state->vtable->error(after);
+	state->vtable->error(slc_from_c_str("', not '"));
+	state->vtable->error(actual);
+	state->vtable->error(slc_from_c_str("'.\n"));
 }
 
 /*
@@ -94,11 +94,11 @@ void _slc_expected_after_error(CONFIG* config, TOKENIZER_STATE* state, size_t li
 void _slc_expected_error(CONFIG* config, TOKENIZER_STATE* state, size_t line, SLCONFIG_STRING expected, SLCONFIG_STRING actual)
 {
 	_slc_print_error_prefix(config, state->filename, line, state->vtable);
-	state->vtable->stderr(slc_from_c_str("Error: Expected '"));
-	state->vtable->stderr(expected);
-	state->vtable->stderr(slc_from_c_str("', not '"));
-	state->vtable->stderr(actual);
-	state->vtable->stderr(slc_from_c_str("'.\n"));
+	state->vtable->error(slc_from_c_str("Error: Expected '"));
+	state->vtable->error(expected);
+	state->vtable->error(slc_from_c_str("', not '"));
+	state->vtable->error(actual);
+	state->vtable->error(slc_from_c_str("'.\n"));
 }
 
 size_t slc_string_length(SLCONFIG_STRING str)

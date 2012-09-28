@@ -6,10 +6,12 @@ ifdef SystemRoot
     PATH_SEP        =\
     message         = @(echo $1)
     SHELL           = cmd.exe
+    LIB_PREFIX      =
 else
     SHELL           = sh
     PATH_SEP        =/
     EXE             =
+    LIB_PREFIX      = lib
     ifeq ($(shell uname), Linux)
         OS              = "Linux"
         STATIC_LIB_EXT  = .a

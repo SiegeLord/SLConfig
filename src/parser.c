@@ -127,13 +127,13 @@ bool parse_node_ref_name(CONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_STRI
 		if(!ret)
 		{
 			_slc_print_error_prefix(config, state->filename, name_line, state->vtable);
-			state->vtable->stderr(slc_from_c_str("Error: '"));
+			state->vtable->error(slc_from_c_str("Error: '"));
 			SLCONFIG_STRING full_name = slc_get_full_name(aggregate);
-			state->vtable->stderr(full_name);
+			state->vtable->error(full_name);
 			slc_destroy_string(&full_name, config->vtable.realloc);
-			state->vtable->stderr(slc_from_c_str(":"));
-			state->vtable->stderr(name);
-			state->vtable->stderr(slc_from_c_str("' does not exist.\n"));
+			state->vtable->error(slc_from_c_str(":"));
+			state->vtable->error(name);
+			state->vtable->error(slc_from_c_str("' does not exist.\n"));
 			return false;
 		}
 		
@@ -142,13 +142,13 @@ bool parse_node_ref_name(CONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_STRI
 			if(!ret->is_aggregate)
 			{
 				_slc_print_error_prefix(config, state->filename, name_line, state->vtable);
-				state->vtable->stderr(slc_from_c_str("Error: '"));
+				state->vtable->error(slc_from_c_str("Error: '"));
 				SLCONFIG_STRING full_name = slc_get_full_name(ret);
-				state->vtable->stderr(full_name);
+				state->vtable->error(full_name);
 				slc_destroy_string(&full_name, config->vtable.realloc);
-				state->vtable->stderr(slc_from_c_str("' of type '"));
-				state->vtable->stderr(ret->type);
-				state->vtable->stderr(slc_from_c_str("' is not an aggregate.\n"));
+				state->vtable->error(slc_from_c_str("' of type '"));
+				state->vtable->error(ret->type);
+				state->vtable->error(slc_from_c_str("' is not an aggregate.\n"));
 				return false;
 			}
 			aggregate = ret;
@@ -246,13 +246,13 @@ bool parse_right_hand_side(CONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_ST
 		if(ref_node->is_aggregate)
 		{
 			_slc_print_error_prefix(config, state->filename, state->line, state->vtable);
-			state->vtable->stderr(slc_from_c_str("Error: Trying to extract a string from '"));
+			state->vtable->error(slc_from_c_str("Error: Trying to extract a string from '"));
 			SLCONFIG_STRING full_name = slc_get_full_name(ref_node);
-			state->vtable->stderr(full_name);
+			state->vtable->error(full_name);
 			slc_destroy_string(&full_name, config->vtable.realloc);
-			state->vtable->stderr(slc_from_c_str("' of type '"));
-			state->vtable->stderr(ref_node->type);
-			state->vtable->stderr(slc_from_c_str("' which is an aggregate.\n"));
+			state->vtable->error(slc_from_c_str("' of type '"));
+			state->vtable->error(ref_node->type);
+			state->vtable->error(slc_from_c_str("' which is an aggregate.\n"));
 		}
 		
 		str = ref_node->value;
@@ -308,20 +308,20 @@ bool parse_left_hand_side(CONFIG* config, SLCONFIG_NODE* aggregate, SLCONFIG_NOD
 			{
 				child = slc_get_node(aggregate, name);
 				_slc_print_error_prefix(config, state->filename, name_line, state->vtable);
-				state->vtable->stderr(slc_from_c_str("Error: Cannot change the type of '"));
+				state->vtable->error(slc_from_c_str("Error: Cannot change the type of '"));
 				SLCONFIG_STRING full_name = slc_get_full_name(child);
-				state->vtable->stderr(full_name);
+				state->vtable->error(full_name);
 				slc_destroy_string(&full_name, config->vtable.realloc);
-				state->vtable->stderr(slc_from_c_str("' from '"));
-				state->vtable->stderr(child->type);
-				state->vtable->stderr(slc_from_c_str("' ("));
-				state->vtable->stderr(slc_from_c_str(child->is_aggregate ? "aggregate" : "string"));
-				state->vtable->stderr(slc_from_c_str(") to "));
-				state->vtable->stderr(slc_from_c_str("'"));
-				state->vtable->stderr(type_or_name);
-				state->vtable->stderr(slc_from_c_str("' ("));
-				state->vtable->stderr(slc_from_c_str(is_aggregate ? "aggregate" : "string"));
-				state->vtable->stderr(slc_from_c_str(").\n"));
+				state->vtable->error(slc_from_c_str("' from '"));
+				state->vtable->error(child->type);
+				state->vtable->error(slc_from_c_str("' ("));
+				state->vtable->error(slc_from_c_str(child->is_aggregate ? "aggregate" : "string"));
+				state->vtable->error(slc_from_c_str(") to "));
+				state->vtable->error(slc_from_c_str("'"));
+				state->vtable->error(type_or_name);
+				state->vtable->error(slc_from_c_str("' ("));
+				state->vtable->error(slc_from_c_str(is_aggregate ? "aggregate" : "string"));
+				state->vtable->error(slc_from_c_str(").\n"));
 				return false;
 			}
 			
@@ -423,13 +423,13 @@ bool parse_assign_expression(CONFIG* config, SLCONFIG_NODE* aggregate, PARSER_ST
 				if(lhs->is_aggregate)
 				{
 					_slc_print_error_prefix(config, state->filename, state->line, state->vtable);
-					state->vtable->stderr(slc_from_c_str("Error: Trying to assign a string to '"));
+					state->vtable->error(slc_from_c_str("Error: Trying to assign a string to '"));
 					SLCONFIG_STRING full_name = slc_get_full_name(lhs);
-					state->vtable->stderr(full_name);
+					state->vtable->error(full_name);
 					slc_destroy_string(&full_name, config->vtable.realloc);
-					state->vtable->stderr(slc_from_c_str("' of type '"));
-					state->vtable->stderr(lhs->type);
-					state->vtable->stderr(slc_from_c_str("' which is an aggregate.\n"));
+					state->vtable->error(slc_from_c_str("' of type '"));
+					state->vtable->error(lhs->type);
+					state->vtable->error(slc_from_c_str("' which is an aggregate.\n"));
 					goto error;
 				}
 				
@@ -453,13 +453,13 @@ bool parse_assign_expression(CONFIG* config, SLCONFIG_NODE* aggregate, PARSER_ST
 				if(!lhs->is_aggregate)
 				{
 					_slc_print_error_prefix(config, state->filename, state->line, state->vtable);
-					state->vtable->stderr(slc_from_c_str("Error: Trying to assign an aggregate to '"));
+					state->vtable->error(slc_from_c_str("Error: Trying to assign an aggregate to '"));
 					SLCONFIG_STRING full_name = slc_get_full_name(lhs);
-					state->vtable->stderr(full_name);
+					state->vtable->error(full_name);
 					slc_destroy_string(&full_name, config->vtable.realloc);
-					state->vtable->stderr(slc_from_c_str("' of type '"));
-					state->vtable->stderr(lhs->type);
-					state->vtable->stderr(slc_from_c_str("' which is not an aggregate.\n"));
+					state->vtable->error(slc_from_c_str("' of type '"));
+					state->vtable->error(lhs->type);
+					state->vtable->error(slc_from_c_str("' which is not an aggregate.\n"));
 					goto error;
 				}
 				
@@ -564,13 +564,13 @@ bool parse_expand_aggregate(CONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STA
 		if(!ref_node->is_aggregate)
 		{
 			_slc_print_error_prefix(config, state->filename, state->line, state->vtable);
-			state->vtable->stderr(slc_from_c_str("Error: Trying to expand '"));
+			state->vtable->error(slc_from_c_str("Error: Trying to expand '"));
 			SLCONFIG_STRING full_name = slc_get_full_name(ref_node);
-			state->vtable->stderr(full_name);
+			state->vtable->error(full_name);
 			slc_destroy_string(&full_name, config->vtable.realloc);
-			state->vtable->stderr(slc_from_c_str("' of type '"));
-			state->vtable->stderr(ref_node->type);
-			state->vtable->stderr(slc_from_c_str("' which is not an aggregate.\n"));
+			state->vtable->error(slc_from_c_str("' of type '"));
+			state->vtable->error(ref_node->type);
+			state->vtable->error(slc_from_c_str("' which is not an aggregate.\n"));
 			return false;
 		}
 		
@@ -584,35 +584,35 @@ bool parse_expand_aggregate(CONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STA
 				SLCONFIG_STRING full_name;
 				
 				_slc_print_error_prefix(config, state->filename, state->line, state->vtable);
-				state->vtable->stderr(slc_from_c_str("Error: Cannot expand '"));
+				state->vtable->error(slc_from_c_str("Error: Cannot expand '"));
 				
 				full_name = slc_get_full_name(ref_node);
-				state->vtable->stderr(full_name);
+				state->vtable->error(full_name);
 				slc_destroy_string(&full_name, config->vtable.realloc);
 				
-				state->vtable->stderr(slc_from_c_str("' of type '"));
-				state->vtable->stderr(ref_node->type);
-				state->vtable->stderr(slc_from_c_str("'. Its child '"));
+				state->vtable->error(slc_from_c_str("' of type '"));
+				state->vtable->error(ref_node->type);
+				state->vtable->error(slc_from_c_str("'. Its child '"));
 				
 				full_name = slc_get_full_name(child);
-				state->vtable->stderr(full_name);
+				state->vtable->error(full_name);
 				slc_destroy_string(&full_name, config->vtable.realloc);
 				
-				state->vtable->stderr(slc_from_c_str("' of type '"));
-				state->vtable->stderr(child->type);
-				state->vtable->stderr(slc_from_c_str("' ("));
-				state->vtable->stderr(slc_from_c_str(child->is_aggregate ? "aggregate" : "string"));
-				state->vtable->stderr(slc_from_c_str(") conflicts with '"));
+				state->vtable->error(slc_from_c_str("' of type '"));
+				state->vtable->error(child->type);
+				state->vtable->error(slc_from_c_str("' ("));
+				state->vtable->error(slc_from_c_str(child->is_aggregate ? "aggregate" : "string"));
+				state->vtable->error(slc_from_c_str(") conflicts with '"));
 				
 				full_name = slc_get_full_name(old_node);
-				state->vtable->stderr(full_name);
+				state->vtable->error(full_name);
 				slc_destroy_string(&full_name, config->vtable.realloc);
 				
-				state->vtable->stderr(slc_from_c_str("' of type '"));
-				state->vtable->stderr(old_node->type);
-				state->vtable->stderr(slc_from_c_str("' ("));
-				state->vtable->stderr(slc_from_c_str(old_node->is_aggregate ? "aggregate" : "string"));
-				state->vtable->stderr(slc_from_c_str(").\n"));
+				state->vtable->error(slc_from_c_str("' of type '"));
+				state->vtable->error(old_node->type);
+				state->vtable->error(slc_from_c_str("' ("));
+				state->vtable->error(slc_from_c_str(old_node->is_aggregate ? "aggregate" : "string"));
+				state->vtable->error(slc_from_c_str(").\n"));
 				
 				return false;
 			}
@@ -670,7 +670,7 @@ bool parse_include_expression(CONFIG* config, SLCONFIG_NODE* aggregate, PARSER_S
 		if(!_slc_add_include(config, filename, false, state->line))
 		{
 			_slc_print_error_prefix(config, state->filename, state->line, state->vtable);
-			state->vtable->stderr(slc_from_c_str("Error: Circular include.\n"));
+			state->vtable->error(slc_from_c_str("Error: Circular include.\n"));
 			return false;
 		}
 		
@@ -678,16 +678,16 @@ bool parse_include_expression(CONFIG* config, SLCONFIG_NODE* aggregate, PARSER_S
 		if(!_slc_load_file(config, filename, &file))
 		{
 			_slc_print_error_prefix(config, state->filename, state->line, state->vtable);
-			state->vtable->stderr(slc_from_c_str("Error: File '"));
-			state->vtable->stderr(filename);
-			state->vtable->stderr(slc_from_c_str("' does not exist.\n"));
+			state->vtable->error(slc_from_c_str("Error: File '"));
+			state->vtable->error(filename);
+			state->vtable->error(slc_from_c_str("' does not exist.\n"));
 			if(config->num_search_dirs)
 			{
-				state->vtable->stderr(slc_from_c_str("Search directories:\n"));
+				state->vtable->error(slc_from_c_str("Search directories:\n"));
 				for(size_t ii = 0; ii < config->num_search_dirs; ii++)
 				{
-					state->vtable->stderr(config->search_dirs[ii]);
-					state->vtable->stderr(slc_from_c_str("\n"));
+					state->vtable->error(config->search_dirs[ii]);
+					state->vtable->error(slc_from_c_str("\n"));
 				}
 			}
 			return false;
@@ -746,13 +746,13 @@ bool parse_aggregate(CONFIG* config, SLCONFIG_NODE* aggregate, PARSER_STATE* sta
 			if(tok.type == TOKEN_RIGHT_BRACE)
 			{
 				_slc_print_error_prefix(config, state->filename, state->line, state->vtable);
-				state->vtable->stderr(slc_from_c_str("Error: Unpaired '}'.\n"));
+				state->vtable->error(slc_from_c_str("Error: Unpaired '}'.\n"));
 				return false;
 			}
 			else if(tok.type == TOKEN_EOF)
 			{
 				_slc_print_error_prefix(config, state->filename, start_line, state->vtable);
-				state->vtable->stderr(slc_from_c_str("Error: Unpaired '{'.\n"));
+				state->vtable->error(slc_from_c_str("Error: Unpaired '{'.\n"));
 				return false;
 			}
 		}

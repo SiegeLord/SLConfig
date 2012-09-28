@@ -6,12 +6,12 @@ C_FLAGS = -g -O2 -Wall -Wextra --std=c99 -I./include
 LIB_SOURCES = $(wildcard src/*.c)
 STATIC_OBJS = $(patsubst src/%.c, .objs/%_static.o, $(LIB_SOURCES))
 STATIC_NAME = slconfig-static
-STATIC_FILE = lib/lib$(STATIC_NAME)$(STATIC_LIB_EXT)
+STATIC_FILE = lib/$(LIB_PREFIX)$(STATIC_NAME)$(STATIC_LIB_EXT)
 
 SHARED_FLAGS = $(C_FLAGS) -fPIC
 SHARED_OBJS = $(patsubst src/%.c, .objs/%_shared.o, $(LIB_SOURCES))
 SHARED_NAME = slconfig
-SHARED_FILE = lib/lib$(SHARED_NAME)$(SHARED_LIB_EXT)
+SHARED_FILE = lib/$(LIB_PREFIX)$(SHARED_NAME)$(SHARED_LIB_EXT)
 
 EXAMPLE_SOURCES = $(wildcard examples/*.c)
 EXAMPLE_FILES = $(patsubst examples/%.c, bin/%$(EXE), $(EXAMPLE_SOURCES))
