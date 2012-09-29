@@ -12,7 +12,7 @@ unquoted strings with some restrictions as to their content).
 
 ```
 // Import nodes from a different file
-#include definitions.slc
+#include definitions.slc;
 
 // This comment is ignored, but the next comment is accessible by user code
 /**An ant*/
