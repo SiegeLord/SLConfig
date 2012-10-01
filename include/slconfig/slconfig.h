@@ -30,8 +30,8 @@ void slc_add_search_directory(SLCONFIG_NODE* node, SLCONFIG_STRING directory, bo
 void slc_clear_search_directories(SLCONFIG_NODE* node);
 bool slc_load_nodes(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename);
 bool slc_load_nodes_string(SLCONFIG_NODE* aggregate, SLCONFIG_STRING filename, SLCONFIG_STRING file, bool copy);
-bool slc_save_node(SLCONFIG_NODE* node, SLCONFIG_STRING filename, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation);
-SLCONFIG_STRING slc_save_node_string(SLCONFIG_NODE* node, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation);
+bool slc_save_node(const SLCONFIG_NODE* node, SLCONFIG_STRING filename, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation);
+SLCONFIG_STRING slc_save_node_string(const SLCONFIG_NODE* node, SLCONFIG_STRING line_end, SLCONFIG_STRING indentation);
 
 /* Node creation/destruction */
 SLCONFIG_NODE* slc_add_node(SLCONFIG_NODE* aggregate, SLCONFIG_STRING type, bool copy_type, SLCONFIG_STRING name, bool copy_name, bool is_aggregate);
@@ -43,16 +43,16 @@ SLCONFIG_NODE* slc_get_node_by_index(SLCONFIG_NODE* aggregate, size_t idx);
 SLCONFIG_NODE* slc_get_node_by_reference(SLCONFIG_NODE* aggregate, SLCONFIG_STRING reference);
 
 /* Node properties */
-SLCONFIG_STRING slc_get_name(SLCONFIG_NODE* node);
-SLCONFIG_STRING slc_get_type(SLCONFIG_NODE* node);
-SLCONFIG_STRING slc_get_full_name(SLCONFIG_NODE* node);
-bool slc_is_aggregate(SLCONFIG_NODE* node);
-size_t slc_get_num_children(SLCONFIG_NODE* node);
-SLCONFIG_STRING slc_get_value(SLCONFIG_NODE* string_node);
+SLCONFIG_STRING slc_get_name(const SLCONFIG_NODE* node);
+SLCONFIG_STRING slc_get_type(const SLCONFIG_NODE* node);
+SLCONFIG_STRING slc_get_full_name(const SLCONFIG_NODE* node);
+bool slc_is_aggregate(const SLCONFIG_NODE* node);
+size_t slc_get_num_children(const SLCONFIG_NODE* node);
+SLCONFIG_STRING slc_get_value(const SLCONFIG_NODE* string_node);
 bool slc_set_value(SLCONFIG_NODE* node, SLCONFIG_STRING string_node, bool copy);
 intptr_t slc_get_user_data(SLCONFIG_NODE* node);
 void slc_set_user_data(SLCONFIG_NODE* node, intptr_t data, void (*user_destructor)(intptr_t));
-SLCONFIG_STRING slc_get_comment(SLCONFIG_NODE* node);
+SLCONFIG_STRING slc_get_comment(const SLCONFIG_NODE* node);
 void slc_set_comment(SLCONFIG_NODE* node, SLCONFIG_STRING comment, bool copy);
 
 /* String handling */

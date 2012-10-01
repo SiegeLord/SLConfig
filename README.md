@@ -722,7 +722,7 @@ errors in the file.
 
 ###slc_save_node
 ```c
-bool slc_save_node(SLCONFIG_NODE* node, SLCONFIG_STRING filename,
+bool slc_save_node(const SLCONFIG_NODE* node, SLCONFIG_STRING filename,
                    SLCONFIG_STRING line_end, SLCONFIG_STRING indentation);
 ```
 
@@ -745,7 +745,7 @@ writing the file.
 
 ###slc_save_node_string
 ```c
-SLCONFIG_STRING slc_save_node_string(SLCONFIG_NODE* node, SLCONFIG_STRING line_end,
+SLCONFIG_STRING slc_save_node_string(const SLCONFIG_NODE* node, SLCONFIG_STRING line_end,
                                    SLCONFIG_STRING indentation);
 ```
 
@@ -861,7 +861,7 @@ The found node or `NULL` if no such node exists.
 
 ###slc_get_name
 ```c
-SLCONFIG_STRING slc_get_name(SLCONFIG_NODE* node);
+SLCONFIG_STRING slc_get_name(const SLCONFIG_NODE* node);
 ```
 
 Gets the name of the node.
@@ -877,7 +877,7 @@ The name of the node.
 
 ###slc_get_full_name
 ```c
-SLCONFIG_STRING slc_get_full_name(SLCONFIG_NODE* node);
+SLCONFIG_STRING slc_get_full_name(const SLCONFIG_NODE* node);
 ```
 
 Gets the full name of the node. This is essentially the absolute reference to it. 
@@ -894,7 +894,7 @@ The full name of the node.
 
 ###slc_get_type
 ```c
-SLCONFIG_STRING slc_get_type(SLCONFIG_NODE* node);
+SLCONFIG_STRING slc_get_type(const SLCONFIG_NODE* node);
 ```
 
 Gets the type of the node.
@@ -909,7 +909,7 @@ The type of the node.
 
 ###slc_is_aggregate
 ```c
-bool slc_is_aggregate(SLCONFIG_NODE* node);
+bool slc_is_aggregate(const SLCONFIG_NODE* node);
 ```
 
 Checks whether the node is an aggregate or not.
@@ -924,7 +924,7 @@ _Returns_:
 
 ###slc_get_num_children
 ```c
-size_t slc_get_num_children(SLCONFIG_NODE* node);
+size_t slc_get_num_children(const SLCONFIG_NODE* node);
 ```
 
 Returns the number of children of the node.
@@ -939,7 +939,7 @@ Number of children of the node if it is an aggregate, `0` otherwise.
 
 ###slc_get_value
 ```c
-SLCONFIG_STRING slc_get_value(SLCONFIG_NODE* string_node);
+SLCONFIG_STRING slc_get_value(const SLCONFIG_NODE* string_node);
 ```
 
 Gets the value of a string node.
@@ -1008,7 +1008,7 @@ The user data of the node.
 
 ###slc_get_comment
 ```c
-SLCONFIG_STRING slc_get_comment(SLCONFIG_NODE* node);
+SLCONFIG_STRING slc_get_comment(const SLCONFIG_NODE* node);
 ```
 
 Gets the docstring of the node.
