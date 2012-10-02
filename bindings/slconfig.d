@@ -332,7 +332,7 @@ struct SNode
 	}
 	
 	@property
-	bool Valid()
+	bool Valid() const
 	{
 		return Node != null;
 	}
