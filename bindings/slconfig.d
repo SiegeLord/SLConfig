@@ -87,7 +87,7 @@ void slc_destroy_string(SLCONFIG_STRING* str, void* function(void*, size_t) cust
 
 private void* Realloc(void* buf, size_t size)
 {
-	if(size == 0 && buf != 0)
+	if(size == 0 && buf !is null)
 		return null;
 	void* ret = null;
 	try
