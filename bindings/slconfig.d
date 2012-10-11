@@ -247,7 +247,8 @@ struct SNode
 	
 	T GetValue(T = const(char)[])(T def = T.init, bool* is_def = null) const
 	{
-		*is_def = false;
+		if(is_def !is null)
+			*is_def = false;
 		if(!Valid)
 		{
 			if(is_def !is null)
