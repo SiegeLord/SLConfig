@@ -245,18 +245,27 @@ struct SNode
 		return slc_get_num_children(Node);
 	}
 	
-	T GetValue(T = const(char)[])(T def = T.init) const
+	T GetValue(T = const(char)[])(T def = T.init, bool* is_def = null) const
 	{
+		*is_def = false;
 		if(!Valid)
 		{
+			if(is_def !is null)
+				*is_def = true;
 			return def;
 		}
 		else
 		{
 			try
+			{
 				return to!(T)(FromStr(slc_get_value(Node)));
+			}
 			catch(ConversionException e)
+			{
+				if(is_def !is null)
+					*is_def = true;
 				return def;
+			}
 		}
 	}
 	
