@@ -245,20 +245,28 @@ struct SNode
 		return slc_get_num_children(Node);
 	}
 	
-	@property
-	T Value(T = const(char)[])() const
+	T GetValue(T = const(char)[])(T def = T.init) const
 	{
-		return to!(T)(FromStr(slc_get_value(Node)));
+		if(!Valid)
+		{
+			return def;
+		}
+		else
+		{
+			try
+				return to!(T)(FromStr(slc_get_value(Node)));
+			catch(ConversionException e)
+				return def;
+		}
 	}
 	
-	@property
-	T Value(T)(T val)
+	T SetValue(T)(T val)
 	{
 		slc_set_value(Node, ToStr(to!(const(char)[])(val)), false);
 		return val;
 	}
 	
-	alias Value opAssign;
+	alias SetValue opAssign;
 	
 	private struct SUserDataWrapper
 	{
@@ -320,15 +328,15 @@ struct SNode
 	
 	T opCast(T)() const
 	{
-		return Value!(T)();
+		return GetValue!(T)();
 	}
 	
 	bool opEquals(T)(const T val) const
 	{
 		static if(is(T : const(SNode)))
-			return Value() == val.Value();
+			return GetValue() == val.GetValue();
 		else
-			return Value!(T)() == val;
+			return GetValue!(T)() == val;
 	}
 	
 	@property
@@ -398,4 +406,6 @@ unittest
 	assert(root4.a == true);
 	assert(cast(double)root4.b - 1.356 < 0.01);
 	assert(!root.c.Valid);
+	assert(cast(double)root.c is double.init);
+	assert(root.c.GetValue(5) == 5);
 }
