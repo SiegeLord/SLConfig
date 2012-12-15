@@ -278,7 +278,18 @@ struct SNode
 		return val;
 	}
 	
-	alias SetValue opAssign;
+	T opAssign(T)(T val)
+	{
+		static if(is(T == SNode))
+		{
+			Node = val.Node;
+			return this;
+		}
+		else
+		{
+			return SetValue(val);
+		}
+	}
 	
 	private struct SUserDataWrapper
 	{
@@ -420,4 +431,6 @@ unittest
 	assert(!root.c.Valid);
 	assert(cast(double)root.c is double.init);
 	assert(root.c.GetValue(5) == 5);
+	
+	auto root5 = root4;
 }
